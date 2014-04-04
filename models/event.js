@@ -75,19 +75,21 @@
             callback = function() {};
           }
           return Event.findNext(function(err, event) {
-            var e, options;
+            var e, options, uri;
             if (err || !event) {
               return callback(err);
             }
+            uri = "" + (GLOBAL.appConfig().trade_api_host) + "/" + event.type;
             options = {
-              uri: GLOBAL.appConfig().app_host,
+              uri: uri,
               method: "POST",
               json: event.loadout
             };
             try {
               return request(options, function(err, response, body) {
                 if (err || response.statusCode !== 200) {
-                  console.error("Could not send event " + event.id + " - " + err);
+                  err = "" + response.statusCode + " - Could not send event " + event.id + " to " + uri + " - " + (JSON.stringify(err)) + " - " + (JSON.stringify(body));
+                  console.log(err);
                   return callback(err);
                 }
                 event.status = "sent";
