@@ -12,7 +12,7 @@
       type: {
         type: DataTypes.INTEGER.UNSIGNED,
         allowNull: false,
-        comment: "order_updated, order_canceled",
+        comment: "orders_match, order_canceled",
         get: function() {
           return MarketHelper.getEventTypeLiteral(this.getDataValue("type"));
         },
@@ -24,7 +24,7 @@
         type: DataTypes.TEXT,
         allowNull: true,
         get: function() {
-          return JSON.parse(this.getDataValue("status"));
+          return JSON.parse(this.getDataValue("loadout"));
         },
         set: function(loadout) {
           return this.setDataValue("loadout", JSON.stringify(loadout));
@@ -56,7 +56,7 @@
             transaction: transaction
           }).complete(callback);
         },
-        sendNext: function(callback) {
+        findNext: function(callback) {
           var query;
           if (callback == null) {
             callback = function() {};
@@ -68,7 +68,13 @@
             order: [["created_at", "ASC"]],
             limit: EVENTS_FETCH_LIMIT
           };
-          return Event.find(query).complete(function(err, event) {
+          return Event.find(query).complete(callback);
+        },
+        sendNext: function(callback) {
+          if (callback == null) {
+            callback = function() {};
+          }
+          return Event.findNext(function(err, event) {
             var e, options;
             if (err || !event) {
               return callback(err);

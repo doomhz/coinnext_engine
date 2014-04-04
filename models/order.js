@@ -13,9 +13,8 @@
   });
 
   module.exports = function(sequelize, DataTypes) {
-    var FEE, ORDERS_MATCH_LIMIT, Order;
+    var FEE, Order;
     FEE = 0.2;
-    ORDERS_MATCH_LIMIT = 10;
     Order = sequelize.define("Order", {
       external_order_id: {
         type: DataTypes.INTEGER.UNSIGNED,
@@ -139,114 +138,102 @@
             }
           }).complete(callback);
         },
+        findNext: function(callback) {
+          var orderToMatchQuery;
+          if (callback == null) {
+            callback = function() {};
+          }
+          orderToMatchQuery = {
+            where: {
+              status: {
+                ne: MarketHelper.getOrderStatus("completed")
+              }
+            },
+            order: [["created_at", "ASC"]]
+          };
+          return Order.find(orderToMatchQuery).complete(callback);
+        },
+        findMatchingOrder: function(orderToMatch, callback) {
+          var matchingOrdersQuery;
+          if (callback == null) {
+            callback = function() {};
+          }
+          matchingOrdersQuery = {
+            where: {
+              action: MarketHelper.getOrderAction(orderToMatch.inversed_action),
+              buy_currency: MarketHelper.getCurrency(orderToMatch.sell_currency),
+              sell_currency: MarketHelper.getCurrency(orderToMatch.buy_currency),
+              status: {
+                ne: MarketHelper.getOrderStatus("completed")
+              }
+            },
+            order: [["created_at", "ASC"]]
+          };
+          if (orderToMatch.action === "buy") {
+            matchingOrdersQuery.where.unit_price = {
+              lte: orderToMatch.unit_price
+            };
+          }
+          if (orderToMatch.action === "sell") {
+            matchingOrdersQuery.where.unit_price = {
+              gte: orderToMatch.unit_price
+            };
+          }
+          return Order.find(matchingOrdersQuery).complete(callback);
+        },
         matchFirstOrder: function(callback) {
           if (callback == null) {
             callback = function() {};
           }
-          return GLOBAL.db.sequelize.transaction(function(transaction) {
-            var orderToMatchQuery;
-            orderToMatchQuery = {
-              where: {
-                status: {
-                  ne: MarketHelper.getOrderStatus("completed")
-                }
-              },
-              order: [["created_at", "ASC"]],
-              limit: 1
-            };
-            return Order.find(orderToMatchQuery, {
-              transaction: transaction
-            }).complete(function(err, orderToMatch) {
-              var matchingOrdersQuery;
-              if (err) {
-                return err;
-              }
-              if (!orderToMatch) {
+          return Order.findNext(function(err, orderToMatch) {
+            if (err) {
+              return err;
+            }
+            if (!orderToMatch) {
+              return callback();
+            }
+            return Order.findMatchingOrder(orderToMatch, function(err, matchingOrder) {
+              if (!matchingOrder) {
                 return callback();
               }
-              matchingOrdersQuery = {
-                where: {
-                  action: MarketHelper.getOrderAction(orderToMatch.inversed_action),
-                  buy_currency: MarketHelper.getCurrency(orderToMatch.sell_currency),
-                  sell_currency: MarketHelper.getCurrency(orderToMatch.buy_currency),
-                  status: {
-                    ne: MarketHelper.getOrderStatus("completed")
-                  }
-                },
-                order: [["created_at", "ASC"]],
-                limit: ORDERS_MATCH_LIMIT
-              };
-              if (orderToMatch.action === "buy") {
-                matchingOrdersQuery.where.unit_price = {
-                  lte: orderToMatch.unit_price
-                };
-              }
-              if (orderToMatch.action === "sell") {
-                matchingOrdersQuery.where.unit_price = {
-                  gte: orderToMatch.unit_price
-                };
-              }
-              return Order.findAll(matchingOrdersQuery, {
-                transaction: transaction
-              }).complete(function(err, matchingOrders) {
-                var orderIdsToSave, updateOrderCallback;
-                orderIdsToSave = Order.matchOrderAmounts(orderToMatch, matchingOrders);
-                if (!orderIdsToSave.length) {
-                  return callback();
-                }
-                orderIdsToSave.push(orderToMatch.id);
-                matchingOrders.push(orderToMatch);
-                matchingOrders = matchingOrders.filter(function(o) {
-                  return orderIdsToSave.indexOf(o.id) > -1;
-                });
+              return GLOBAL.db.sequelize.transaction(function(transaction) {
+                var matchResult, updateOrderCallback;
+                matchResult = Order.matchOrders(orderToMatch, matchingOrder);
                 updateOrderCallback = function(order, cb) {
                   return order.save({
                     transaction: transaction
-                  }).complete(function(err, savedOrder) {
-                    if (err) {
-                      return cb(err, savedOrder);
-                    }
-                    return GLOBAL.db.Event.add("order_updated", order.getEventValues(), transaction, function() {
-                      return cb(err, savedOrder);
-                    });
-                  });
+                  }).complete(cb);
                 };
-                return async.each(matchingOrders, updateOrderCallback, function(err, result) {
+                return async.each([orderToMatch, matchingOrder], updateOrderCallback, function(err, result) {
                   if (err) {
-                    console.error("Could not match order " + orderToMatch.id + " - " + (JSON.stringify(err)));
+                    console.error("Could not match order " + orderToMatch.id + " with " + matchingOrder.id + " - " + (JSON.stringify(err)));
                     return transaction.rollback().success(function() {
                       return callback(err);
                     });
                   }
-                  return transaction.commit().success(function() {
-                    return callback(null, orderIdsToSave);
+                  return GLOBAL.db.Event.add("orders_match", matchResult, transaction, function(err) {
+                    if (err) {
+                      console.error("Could not add event for matching order " + orderToMatch.id + " with " + matchingOrder.id + " - " + (JSON.stringify(err)));
+                      return transaction.rollback().success(function() {
+                        return callback(err);
+                      });
+                    }
+                    return transaction.commit().success(function() {
+                      return callback(null, matchResult);
+                    });
                   });
                 });
               });
             });
           });
         },
-        matchOrderAmounts: function(orderToMatch, matchingOrders) {
-          var amountToMatch, changedOrderIds, matchingOrder, _i, _len;
-          changedOrderIds = [];
-          for (_i = 0, _len = matchingOrders.length; _i < _len; _i++) {
-            matchingOrder = matchingOrders[_i];
-            if (orderToMatch.left_amount === 0) {
-              orderToMatch.adjustStatusByAmounts();
-              return changedOrderIds;
-            }
-            amountToMatch = matchingOrder.left_amount > orderToMatch.left_amount ? orderToMatch.left_amount : matchingOrder.left_amount;
-            orderToMatch.addMatchedAmount(amountToMatch);
-            orderToMatch.addResultAmount(amountToMatch);
-            orderToMatch.addFee(amountToMatch);
-            matchingOrder.addMatchedAmount(amountToMatch);
-            matchingOrder.addResultAmount(amountToMatch);
-            matchingOrder.addFee(amountToMatch);
-            matchingOrder.adjustStatusByAmounts();
-            changedOrderIds.push(matchingOrder.id);
-          }
-          orderToMatch.adjustStatusByAmounts();
-          return changedOrderIds;
+        matchOrders: function(orderToMatch, matchingOrder) {
+          var amountToMatch, matchResult;
+          amountToMatch = matchingOrder.left_amount > orderToMatch.left_amount ? orderToMatch.left_amount : matchingOrder.left_amount;
+          matchResult = [];
+          matchResult.push(orderToMatch.matchOrderAmount(amountToMatch));
+          matchResult.push(matchingOrder.matchOrderAmount(amountToMatch));
+          return matchResult;
         },
         deleteOpen: function(externalId, callback) {
           var query;
@@ -260,6 +247,24 @@
         }
       },
       instanceMethods: {
+        matchOrderAmount: function(amount) {
+          var fee, result, resultAmount;
+          resultAmount = this.calculateResultAmount(amount);
+          fee = this.calculateFee(resultAmount);
+          resultAmount = math.add(resultAmount, -fee);
+          this.addMatchedAmount(amount);
+          this.addResultAmount(resultAmount);
+          this.addFee(fee);
+          this.adjustStatusByAmounts();
+          return result = {
+            id: this.id,
+            order_id: this.external_order_id,
+            matched_amount: amount,
+            result_amount: resultAmount,
+            fee: fee,
+            status: this.status
+          };
+        },
         calculateResultAmount: function(amount) {
           var unitPrice;
           if (this.action === "buy") {
@@ -270,21 +275,16 @@
           return MarketHelper.convertToBigint(math.multiply(amount, unitPrice));
         },
         calculateFee: function(amount) {
-          var resultAmount;
-          resultAmount = this.calculateResultAmount(amount);
-          return math.select(resultAmount).divide(100).multiply(FEE).done();
+          return math.select(amount).divide(100).multiply(FEE).done();
         },
         addMatchedAmount: function(amount) {
           return this.matched_amount = math.add(this.matched_amount, amount);
         },
         addResultAmount: function(amount) {
-          var fee, resultAmount;
-          resultAmount = this.calculateResultAmount(amount);
-          fee = this.calculateFee(amount);
-          return this.result_amount = math.select(this.result_amount).add(resultAmount).add(-fee).done();
+          return this.result_amount = math.add(this.result_amount, amount);
         },
         addFee: function(amount) {
-          return this.fee = math.add(this.fee, this.calculateFee(amount));
+          return this.fee = math.add(this.fee, amount);
         },
         adjustStatusByAmounts: function() {
           if (this.left_amount === 0) {
@@ -296,17 +296,6 @@
           if (this.matched_amount === 0) {
             return this.status = "open";
           }
-        },
-        getEventValues: function() {
-          var data;
-          return data = {
-            order_id: this.external_order_id,
-            matched_amount: this.matched_amount,
-            result_amount: this.result_amount,
-            fee: this.fee,
-            status: this.status,
-            update_time: this.updated_at
-          };
         }
       }
     });

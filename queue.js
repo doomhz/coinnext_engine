@@ -6,10 +6,10 @@ var config = JSON.parse(fs.readFileSync(process.cwd() + '/config.json', encoding
 GLOBAL.appConfig = function () {return config;};
 GLOBAL.db = require('./models/index');
 
-var processOrders = function () {
-  GLOBAL.db.Order.matchFirstOrder(function () {
-    setTimeout(processOrders, 100);
+var processEvents = function () {
+  GLOBAL.db.Event.sendNext(function () {
+    setTimeout(processEvents, 100);
   });
-};
+}
 
-processOrders();
+processEvents();

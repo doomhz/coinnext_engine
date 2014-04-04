@@ -8,7 +8,6 @@ math = require("mathjs")
 module.exports = (sequelize, DataTypes) ->
 
   FEE = 0.2
-  ORDERS_MATCH_LIMIT = 10
 
   Order = sequelize.define "Order",
       external_order_id:
@@ -100,83 +99,89 @@ module.exports = (sequelize, DataTypes) ->
         findByOrderId: (orderId, callback)->
           Order.find({where: {external_order_id: orderId}}).complete callback
 
+        findNext: (callback = ()->)->
+          orderToMatchQuery =
+            where:
+              status:
+                ne: MarketHelper.getOrderStatus "completed"
+            order: [
+              ["created_at", "ASC"]
+            ]
+          Order.find(orderToMatchQuery).complete callback
+
+        findMatchingOrder: (orderToMatch, callback = ()->)->
+          matchingOrdersQuery =
+            where:
+              action: MarketHelper.getOrderAction orderToMatch.inversed_action
+              buy_currency: MarketHelper.getCurrency orderToMatch.sell_currency
+              sell_currency: MarketHelper.getCurrency orderToMatch.buy_currency
+              status:
+                ne: MarketHelper.getOrderStatus "completed"
+            order: [
+              ["created_at", "ASC"]
+            ]
+          if orderToMatch.action is "buy"
+            matchingOrdersQuery.where.unit_price =
+              lte: orderToMatch.unit_price
+          if orderToMatch.action is "sell"
+            matchingOrdersQuery.where.unit_price =
+              gte: orderToMatch.unit_price
+          Order.find(matchingOrdersQuery).complete callback
+
         matchFirstOrder: (callback = ()->)->
-          GLOBAL.db.sequelize.transaction (transaction)->
-            orderToMatchQuery =
-              where:
-                status:
-                  ne: MarketHelper.getOrderStatus "completed"
-              order: [
-                ["created_at", "ASC"]
-              ]
-              limit: 1
-            Order.find(orderToMatchQuery, {transaction: transaction}).complete (err, orderToMatch)->
-              return err  if err
-              return callback()  if not orderToMatch
-              matchingOrdersQuery =
-                where:
-                  action: MarketHelper.getOrderAction orderToMatch.inversed_action
-                  buy_currency: MarketHelper.getCurrency orderToMatch.sell_currency
-                  sell_currency: MarketHelper.getCurrency orderToMatch.buy_currency
-                  status:
-                    ne: MarketHelper.getOrderStatus "completed"
-                order: [
-                  ["created_at", "ASC"]
-                ]
-                limit: ORDERS_MATCH_LIMIT
-              if orderToMatch.action is "buy"
-                matchingOrdersQuery.where.unit_price =
-                  lte: orderToMatch.unit_price
-              if orderToMatch.action is "sell"
-                matchingOrdersQuery.where.unit_price =
-                  gte: orderToMatch.unit_price
-              Order.findAll(matchingOrdersQuery, {transaction: transaction}).complete (err, matchingOrders)->
-                orderIdsToSave = Order.matchOrderAmounts orderToMatch, matchingOrders
-                return callback()  if not orderIdsToSave.length
-                orderIdsToSave.push orderToMatch.id
-                matchingOrders.push orderToMatch
-                matchingOrders = matchingOrders.filter (o)->
-                  orderIdsToSave.indexOf(o.id) > -1
+          Order.findNext (err, orderToMatch)->
+            return err  if err
+            return callback()  if not orderToMatch
+            Order.findMatchingOrder orderToMatch, (err, matchingOrder)->
+              return callback()  if not matchingOrder
+              GLOBAL.db.sequelize.transaction (transaction)->
+                matchResult = Order.matchOrders orderToMatch, matchingOrder
                 updateOrderCallback = (order, cb)->
-                  order.save({transaction: transaction}).complete (err, savedOrder)->
-                    return cb err, savedOrder  if err
-                    GLOBAL.db.Event.add "order_updated", order.getEventValues(), transaction, ()->
-                      cb err, savedOrder
-                async.each matchingOrders, updateOrderCallback, (err, result)->
+                  order.save({transaction: transaction}).complete cb
+                async.each [orderToMatch, matchingOrder], updateOrderCallback, (err, result)->
                   if err
-                    console.error "Could not match order #{orderToMatch.id} - #{JSON.stringify(err)}"
+                    console.error "Could not match order #{orderToMatch.id} with #{matchingOrder.id} - #{JSON.stringify(err)}"
                     return transaction.rollback().success ()->
                       callback err
-                  transaction.commit().success ()->
-                    callback null, orderIdsToSave
+                  GLOBAL.db.Event.add "orders_match", matchResult, transaction, (err)->
+                    if err
+                      console.error "Could not add event for matching order #{orderToMatch.id} with #{matchingOrder.id} - #{JSON.stringify(err)}"
+                      return transaction.rollback().success ()->
+                        callback err
+                    transaction.commit().success ()->
+                      callback null, matchResult
 
-        matchOrderAmounts: (orderToMatch, matchingOrders)->
-          changedOrderIds = []
-          for matchingOrder in matchingOrders
-            if orderToMatch.left_amount is 0
-              orderToMatch.adjustStatusByAmounts()
-              return changedOrderIds
-            amountToMatch = if matchingOrder.left_amount > orderToMatch.left_amount then orderToMatch.left_amount else matchingOrder.left_amount
-            orderToMatch.addMatchedAmount amountToMatch
-            orderToMatch.addResultAmount amountToMatch
-            orderToMatch.addFee amountToMatch
-            matchingOrder.addMatchedAmount amountToMatch
-            matchingOrder.addResultAmount amountToMatch
-            matchingOrder.addFee amountToMatch
-            matchingOrder.adjustStatusByAmounts()
-            changedOrderIds.push matchingOrder.id
-          orderToMatch.adjustStatusByAmounts()
-          return changedOrderIds
+        matchOrders: (orderToMatch, matchingOrder)->
+          amountToMatch = if matchingOrder.left_amount > orderToMatch.left_amount then orderToMatch.left_amount else matchingOrder.left_amount
+          matchResult = []
+          matchResult.push orderToMatch.matchOrderAmount amountToMatch
+          matchResult.push matchingOrder.matchOrderAmount amountToMatch
+          matchResult
 
         deleteOpen: (externalId, callback)->
           query =
             external_order_id: externalId
             status:
               ne: MarketHelper.getOrderStatus "completed"
-          Order.destroy(query).complete callback
-    
+          Order.destroy(query).complete callback    
 
       instanceMethods:
+
+        matchOrderAmount: (amount)->
+          resultAmount = @calculateResultAmount amount
+          fee = @calculateFee resultAmount
+          resultAmount = math.add resultAmount, -fee
+          @addMatchedAmount amount
+          @addResultAmount resultAmount
+          @addFee fee
+          @adjustStatusByAmounts()
+          result =
+            id: @id
+            order_id: @external_order_id
+            matched_amount: amount
+            result_amount: resultAmount
+            fee: fee
+            status: @status
 
         calculateResultAmount: (amount)->
           return amount  if @action is "buy"
@@ -185,32 +190,20 @@ module.exports = (sequelize, DataTypes) ->
           MarketHelper.convertToBigint math.multiply(amount, unitPrice)
 
         calculateFee: (amount)->
-          resultAmount = @calculateResultAmount amount
-          math.select(resultAmount).divide(100).multiply(FEE).done()
+          math.select(amount).divide(100).multiply(FEE).done()
 
         addMatchedAmount: (amount)->
           @matched_amount = math.add @matched_amount, amount
 
         addResultAmount: (amount)->
-          resultAmount = @calculateResultAmount amount
-          fee = @calculateFee amount
-          @result_amount = math.select(@result_amount).add(resultAmount).add(-fee).done()
+          @result_amount = math.add @result_amount, amount
 
         addFee: (amount)->
-          @fee = math.add @fee, @calculateFee(amount)
+          @fee = math.add @fee, amount
 
         adjustStatusByAmounts: ()->
           return @status = "completed"  if @left_amount is 0
           return @status = "partiallyCompleted"  if @matched_amount > 0 and @matched_amount < @amount
           return @status = "open"  if @matched_amount is 0
-
-        getEventValues: ()->
-          data =
-            order_id: @external_order_id
-            matched_amount: @matched_amount
-            result_amount: @result_amount
-            fee: @fee
-            status: @status
-            update_time: @updated_at
 
   Order

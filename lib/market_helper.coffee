@@ -43,7 +43,7 @@ MARKET_STATUS =
   disabled: 2
 
 EVENT_TYPE =
-  order_updated: 1
+  orders_match: 1
   order_canceled: 2
 
 EVENT_STATUS =

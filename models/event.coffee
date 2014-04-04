@@ -9,7 +9,7 @@ module.exports = (sequelize, DataTypes) ->
       type:
         type: DataTypes.INTEGER.UNSIGNED
         allowNull: false
-        comment: "order_updated, order_canceled"
+        comment: "orders_match, order_canceled"
         get: ()->
           MarketHelper.getEventTypeLiteral @getDataValue("type")
         set: (type)->
@@ -18,7 +18,7 @@ module.exports = (sequelize, DataTypes) ->
         type: DataTypes.TEXT
         allowNull: true
         get: ()->
-          JSON.parse @getDataValue("status")
+          JSON.parse @getDataValue("loadout")
         set: (loadout)->
           @setDataValue "loadout", JSON.stringify(loadout)
       status:
@@ -37,7 +37,7 @@ module.exports = (sequelize, DataTypes) ->
         add: (type, loadout, transaction, callback = ()->)->
           Event.create({type: type, loadout: loadout}, {transaction: transaction}).complete callback
 
-        sendNext: (callback = ()->)->
+        findNext: (callback = ()->)->
           query =
             where:
               status: MarketHelper.getEventStatus("unsent")
@@ -45,7 +45,10 @@ module.exports = (sequelize, DataTypes) ->
               ["created_at", "ASC"]
             ]
             limit: EVENTS_FETCH_LIMIT
-          Event.find(query).complete (err, event)->
+          Event.find(query).complete callback
+
+        sendNext: (callback = ()->)->
+          Event.findNext (err, event)->
             return callback err  if err or not event
             options =
               uri: GLOBAL.appConfig().app_host
