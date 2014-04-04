@@ -28,9 +28,12 @@
     return app.del("/order/:order_id", function(req, res, next) {
       var orderId;
       orderId = req.params.order_id;
-      return Order.deleteOpen(orderId, function(err) {
+      return Order.deleteOpen(orderId, function(err, destroyed) {
         if (err) {
           return next(new restify.ConflictError(err));
+        }
+        if (!destroyed) {
+          return next(new restify.ConflictError("Order " + orderId + " could not be deleted."));
         }
         return res.send({
           order_id: orderId

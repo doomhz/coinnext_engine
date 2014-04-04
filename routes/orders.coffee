@@ -21,7 +21,8 @@ module.exports = (app)->
   app.del "/order/:order_id", (req, res, next)->
     orderId = req.params.order_id
     #console.log orderId
-    Order.deleteOpen orderId, (err)->
+    Order.deleteOpen orderId, (err, destroyed)->
       return next(new restify.ConflictError err)  if err
+      return next(new restify.ConflictError "Order #{orderId} could not be deleted.")  if not destroyed
       res.send
         order_id: orderId
