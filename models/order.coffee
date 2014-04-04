@@ -118,13 +118,18 @@ module.exports = (sequelize, DataTypes) ->
                   action: MarketHelper.getOrderAction orderToMatch.inversed_action
                   buy_currency: MarketHelper.getCurrency orderToMatch.sell_currency
                   sell_currency: MarketHelper.getCurrency orderToMatch.buy_currency
-                  unit_price: orderToMatch.unit_price
                   status:
                     ne: MarketHelper.getOrderStatus "completed"
                 order: [
                   ["created_at", "ASC"]
                 ]
                 limit: ORDERS_MATCH_LIMIT
+              if orderToMatch.action is "buy"
+                matchingOrdersQuery.where.unit_price =
+                  lte: orderToMatch.unit_price
+              if orderToMatch.action is "sell"
+                matchingOrdersQuery.where.unit_price =
+                  gte: orderToMatch.unit_price
               Order.findAll(matchingOrdersQuery, {transaction: transaction}).complete (err, matchingOrders)->
                 orderIdsToSave = Order.matchOrderAmounts orderToMatch, matchingOrders
                 return callback()  if not orderIdsToSave.length
