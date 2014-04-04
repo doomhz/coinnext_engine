@@ -18,8 +18,8 @@ describe "Order", ->
         {id: 5, external_order_id: 13, type: "limit", action: "buy", buy_currency: "LTC", sell_currency: "BTC", amount: MarketHelper.convertToBigint(5), unit_price: MarketHelper.convertToBigint(0.1), status: "open", created_at: now - 1500}
       ]
       matchingResult = [
-        {id: 1, order_id: 5, matched_amount: 200000000, result_amount: 199600000, fee: 400000, status: "partiallyCompleted"}
-        {id: 2, order_id: 8, matched_amount: 200000000, result_amount: 19960000, fee: 40000, status: "completed"}
+        {id: 1, order_id: 5, matched_amount: 200000000, result_amount: 199600000, fee: 400000, unit_price: MarketHelper.convertToBigint(0.1), status: "partiallyCompleted"}
+        {id: 2, order_id: 8, matched_amount: 200000000, result_amount: 19960000, fee: 40000, unit_price: MarketHelper.convertToBigint(0.1), status: "completed"}
       ]
 
       beforeEach (done)->

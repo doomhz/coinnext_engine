@@ -231,8 +231,8 @@
           var amountToMatch, matchResult;
           amountToMatch = matchingOrder.left_amount > orderToMatch.left_amount ? orderToMatch.left_amount : matchingOrder.left_amount;
           matchResult = [];
-          matchResult.push(orderToMatch.matchOrderAmount(amountToMatch));
-          matchResult.push(matchingOrder.matchOrderAmount(amountToMatch));
+          matchResult.push(orderToMatch.matchOrderAmount(amountToMatch, matchingOrder.unit_price));
+          matchResult.push(matchingOrder.matchOrderAmount(amountToMatch, matchingOrder.unit_price));
           return matchResult;
         },
         deleteOpen: function(externalId, callback) {
@@ -247,9 +247,9 @@
         }
       },
       instanceMethods: {
-        matchOrderAmount: function(amount) {
+        matchOrderAmount: function(amount, unitPrice) {
           var fee, result, resultAmount;
-          resultAmount = this.calculateResultAmount(amount);
+          resultAmount = this.calculateResultAmount(amount, unitPrice);
           fee = this.calculateFee(resultAmount);
           resultAmount = math.add(resultAmount, -fee);
           this.addMatchedAmount(amount);
@@ -262,16 +262,16 @@
             matched_amount: amount,
             result_amount: resultAmount,
             fee: fee,
+            unit_price: unitPrice,
             status: this.status
           };
         },
-        calculateResultAmount: function(amount) {
-          var unitPrice;
+        calculateResultAmount: function(amount, unitPrice) {
           if (this.action === "buy") {
             return amount;
           }
           amount = MarketHelper.convertFromBigint(amount);
-          unitPrice = MarketHelper.convertFromBigint(this.unit_price);
+          unitPrice = MarketHelper.convertFromBigint(unitPrice);
           return MarketHelper.convertToBigint(math.multiply(amount, unitPrice));
         },
         calculateFee: function(amount) {

@@ -154,8 +154,8 @@ module.exports = (sequelize, DataTypes) ->
         matchOrders: (orderToMatch, matchingOrder)->
           amountToMatch = if matchingOrder.left_amount > orderToMatch.left_amount then orderToMatch.left_amount else matchingOrder.left_amount
           matchResult = []
-          matchResult.push orderToMatch.matchOrderAmount amountToMatch
-          matchResult.push matchingOrder.matchOrderAmount amountToMatch
+          matchResult.push orderToMatch.matchOrderAmount amountToMatch, matchingOrder.unit_price
+          matchResult.push matchingOrder.matchOrderAmount amountToMatch, matchingOrder.unit_price
           matchResult
 
         deleteOpen: (externalId, callback)->
@@ -167,8 +167,8 @@ module.exports = (sequelize, DataTypes) ->
 
       instanceMethods:
 
-        matchOrderAmount: (amount)->
-          resultAmount = @calculateResultAmount amount
+        matchOrderAmount: (amount, unitPrice)->
+          resultAmount = @calculateResultAmount amount, unitPrice
           fee = @calculateFee resultAmount
           resultAmount = math.add resultAmount, -fee
           @addMatchedAmount amount
@@ -181,12 +181,13 @@ module.exports = (sequelize, DataTypes) ->
             matched_amount: amount
             result_amount: resultAmount
             fee: fee
+            unit_price: unitPrice
             status: @status
 
-        calculateResultAmount: (amount)->
+        calculateResultAmount: (amount, unitPrice)->
           return amount  if @action is "buy"
           amount = MarketHelper.convertFromBigint amount
-          unitPrice = MarketHelper.convertFromBigint @unit_price
+          unitPrice = MarketHelper.convertFromBigint unitPrice
           MarketHelper.convertToBigint math.multiply(amount, unitPrice)
 
         calculateFee: (amount)->
