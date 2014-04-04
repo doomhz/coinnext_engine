@@ -14,6 +14,7 @@ GLOBAL.db = require('./models/index');
 
 // Setup express
 var server = restify.createServer();
+server.use(restify.bodyParser());
 var port = process.env.PORT || 7000;
 server.listen(process.env.PORT || 7000, function(){
   console.log("Coinnext exchange engine is running on port %d in %s mode", port, environment);

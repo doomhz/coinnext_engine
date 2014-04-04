@@ -127,6 +127,7 @@ module.exports = (sequelize, DataTypes) ->
                 limit: ORDERS_MATCH_LIMIT
               Order.findAll(matchingOrdersQuery, {transaction: transaction}).complete (err, matchingOrders)->
                 orderIdsToSave = Order.matchOrderAmounts orderToMatch, matchingOrders
+                return callback()  if not orderIdsToSave.length
                 orderIdsToSave.push orderToMatch.id
                 matchingOrders.push orderToMatch
                 matchingOrders = matchingOrders.filter (o)->
@@ -161,6 +162,14 @@ module.exports = (sequelize, DataTypes) ->
             changedOrderIds.push matchingOrder.id
           orderToMatch.adjustStatusByAmounts()
           return changedOrderIds
+
+        deleteOpen: (externalId, callback)->
+          query =
+            external_order_id: externalId
+            status:
+              ne: MarketHelper.getOrderStatus "completed"
+          Order.destroy(query).complete callback
+    
 
       instanceMethods:
 

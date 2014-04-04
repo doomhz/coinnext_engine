@@ -182,6 +182,9 @@
               }).complete(function(err, matchingOrders) {
                 var orderIdsToSave, updateOrderCallback;
                 orderIdsToSave = Order.matchOrderAmounts(orderToMatch, matchingOrders);
+                if (!orderIdsToSave.length) {
+                  return callback();
+                }
                 orderIdsToSave.push(orderToMatch.id);
                 matchingOrders.push(orderToMatch);
                 matchingOrders = matchingOrders.filter(function(o) {
@@ -235,6 +238,16 @@
           }
           orderToMatch.adjustStatusByAmounts();
           return changedOrderIds;
+        },
+        deleteOpen: function(externalId, callback) {
+          var query;
+          query = {
+            external_order_id: externalId,
+            status: {
+              ne: MarketHelper.getOrderStatus("completed")
+            }
+          };
+          return Order.destroy(query).complete(callback);
         }
       },
       instanceMethods: {
