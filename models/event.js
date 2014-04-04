@@ -86,7 +86,7 @@
             };
             try {
               return request(options, function(err, response, body) {
-                if (err || response.statusCode === 200) {
+                if (err || response.statusCode !== 200) {
                   console.error("Could not send event " + event.id + " - " + err);
                   return callback(err);
                 }

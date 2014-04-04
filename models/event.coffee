@@ -56,7 +56,7 @@ module.exports = (sequelize, DataTypes) ->
               json: event.loadout
             try
               request options, (err, response, body)->
-                if err or response.statusCode is 200
+                if err or response.statusCode isnt 200
                   console.error "Could not send event #{event.id} - #{err}"
                   return callback err
                 event.status = "sent"
