@@ -1,0 +1,41 @@
+{
+  "development" : {
+    "mysql": {
+      "db": "coinnext_engine_dev",
+      "user": "root",
+      "password": "",
+      "port": 3306,
+      "host": "localhost",
+      "logging": true
+    },
+    "salt": "coinnextenginesecret#1999",
+    "engine_host": "localhost:7000",
+    "app_host": "localhost:5000"
+  },
+  "test" : {
+    "mysql": {
+      "db": "coinnext_engine_test",
+      "user": "root",
+      "password": "",
+      "port": 3306,
+      "host": "localhost",
+      "logging": true
+    },
+    "salt": "coinnextenginesecret#1999",
+    "engine_host": "localhost:7000",
+    "app_host": "localhost:5000"
+  },
+  "production" : {
+    "mysql": {
+      "db": "coinnext_engine_production",
+      "user": "root",
+      "password": "",
+      "port": 3306,
+      "host": "localhost",
+      "logging": true
+    },
+    "salt": "coinnextenginesecret#1999",
+    "engine_host": "localhost:7000",
+    "app_host": "localhost:5000"
+  }
+}

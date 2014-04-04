@@ -1,0 +1,32 @@
+{
+  "name": "coinnext_engine",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "start": "node api",
+    "test": "make test"
+  },
+  "dependencies": {
+    "restify": "latest"
+    , "coffee-script": "latest"
+    ,"underscore": "latest"
+    , "underscore.string": "latest"
+    , "date-utils": "latest"
+    , "winston": "latest"
+    , "async": "latest"
+    , "request": "latest"
+    , "mysql": "latest"
+    , "sequelize": "latest"
+    , "lodash": "latest"
+    , "mathjs": "latest"
+  },
+  "devDependencies": {
+    "mocha": "latest"
+    , "should": "latest"
+    , "growl": "latest"
+    , "nodemock": "latest"
+    , "supertest": "latest"
+    , "grunt-contrib-coffee": "latest"
+    , "grunt-contrib-watch": "latest"
+  }
+}
