@@ -10,7 +10,7 @@
     },
     "salt": "coinnextenginesecret#1999",
     "engine_host": "localhost:7000",
-    "app_host": "localhost:5000"
+    "trade_api_host": "http://localhost:6000"
   },
   "test" : {
     "mysql": {
@@ -23,7 +23,7 @@
     },
     "salt": "coinnextenginesecret#1999",
     "engine_host": "localhost:7000",
-    "app_host": "localhost:5000"
+    "trade_api_host": "http://localhost:6000"
   },
   "production" : {
     "mysql": {
@@ -36,6 +36,6 @@
     },
     "salt": "coinnextenginesecret#1999",
     "engine_host": "localhost:7000",
-    "app_host": "localhost:5000"
+    "trade_api_host": "http://localhost:6000"
   }
 }
