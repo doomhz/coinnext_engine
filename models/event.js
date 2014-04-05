@@ -87,6 +87,9 @@
             };
             try {
               return request(options, function(err, response, body) {
+                if (response == null) {
+                  response = {};
+                }
                 if (err || response.statusCode !== 200) {
                   err = "" + response.statusCode + " - Could not send event " + event.id + " to " + uri + " - " + (JSON.stringify(err)) + " - " + (JSON.stringify(body));
                   console.log(err);
