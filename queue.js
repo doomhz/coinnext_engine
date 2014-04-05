@@ -8,7 +8,7 @@ GLOBAL.db = require('./models/index');
 
 var processEvents = function () {
   GLOBAL.db.Event.sendNext(function () {
-    setTimeout(processEvents, 100);
+    setTimeout(processEvents, 500);
   });
 }
 
