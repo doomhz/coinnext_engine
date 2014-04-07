@@ -3,6 +3,8 @@ math = require("mathjs")
   number: "bignumber"
   decimals: 8
 
+FEE = 0.2
+
 #CURRENCIES = [
 #  "BTC", "LTC", "PPC", "WDC", "NMC", "QRK",
 #  "NVC", "ZET", "FTC", "XPM", "MEC", "TRC"
@@ -131,5 +133,8 @@ MarketHelper =
 
   getEventStatusLiteral: (intStatus)->
     _.invert(EVENT_STATUS)[intStatus]
+
+  getTradeFee: ()->
+    FEE
 
 exports = module.exports = MarketHelper

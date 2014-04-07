@@ -1,5 +1,5 @@
 restify = require "restify"
-Order = GLOBAL.db.Order
+OrderBook = require "./../lib/order_book"
 
 module.exports = (app)->
 
@@ -14,15 +14,14 @@ module.exports = (app)->
       amount: req.body.amount
       unit_price: req.body.unit_price
     #console.log orderData
-    Order.create(orderData).complete (err, order)->
+    OrderBook.addOrder orderData, (err, order)->
       return next(new restify.ConflictError err)  if err
       res.send order
 
   app.del "/order/:order_id", (req, res, next)->
     orderId = req.params.order_id
     #console.log orderId
-    Order.deleteOpen orderId, (err, destroyed)->
+    OrderBook.deleteOpenOrder orderId, (err)->
       return next(new restify.ConflictError err)  if err
-      return next(new restify.ConflictError "Order #{orderId} could not be deleted.")  if not destroyed
       res.send
         order_id: orderId

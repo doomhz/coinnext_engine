@@ -31,7 +31,7 @@ describe "Orders API", ->
         .post("/order/1")
         .send(orderData)
         .end (err, res)->
-          GLOBAL.db.Order.findNext (err, order)->
+          GLOBAL.db.BuyOrder.findByOrderId 1, (err, order)->
             order.external_order_id.should.eql 1
             order.type.should.eql "limit"
             order.action.should.eql "buy"
@@ -63,7 +63,7 @@ describe "Orders API", ->
         status: "open"
 
       beforeEach (done)->
-        GLOBAL.db.Order.create(orderData).complete done
+        GLOBAL.db.BuyOrder.create(orderData).complete done
 
       it "returns 200 OK", (done)->
         request('http://localhost:7000')
@@ -78,7 +78,7 @@ describe "Orders API", ->
         .send()
         .expect(200)
         .end (err, res)->
-          GLOBAL.db.Order.findAll({where: {external_order_id: 1}}).complete (err, orders)->
+          GLOBAL.db.BuyOrder.findAll({where: {external_order_id: 1}}).complete (err, orders)->
             orders.length.should.eql 0
             done()
 
@@ -95,7 +95,7 @@ describe "Orders API", ->
         status: "partiallyCompleted"
 
       beforeEach (done)->
-        GLOBAL.db.Order.create(orderData).complete done
+        GLOBAL.db.BuyOrder.create(orderData).complete done
       
       it "returns 200", (done)->
         request('http://localhost:7000')
@@ -110,7 +110,7 @@ describe "Orders API", ->
         .send()
         .expect(200)
         .end (err, res)->
-          GLOBAL.db.Order.findAll({where: {external_order_id: 1}}).complete (err, orders)->
+          GLOBAL.db.BuyOrder.findAll({where: {external_order_id: 1}}).complete (err, orders)->
             orders.length.should.eql 0
             done()
 
@@ -127,7 +127,7 @@ describe "Orders API", ->
         status: "completed"
 
       beforeEach (done)->
-        GLOBAL.db.Order.create(orderData).complete done
+        GLOBAL.db.BuyOrder.create(orderData).complete done
       
       it "returns 409", (done)->
         request('http://localhost:7000')

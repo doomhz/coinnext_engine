@@ -1,9 +1,9 @@
 (function() {
-  var Order, restify;
+  var OrderBook, restify;
 
   restify = require("restify");
 
-  Order = GLOBAL.db.Order;
+  OrderBook = require("./../lib/order_book");
 
   module.exports = function(app) {
     app.post("/order/:order_id", function(req, res, next) {
@@ -18,7 +18,7 @@
         amount: req.body.amount,
         unit_price: req.body.unit_price
       };
-      return Order.create(orderData).complete(function(err, order) {
+      return OrderBook.addOrder(orderData, function(err, order) {
         if (err) {
           return next(new restify.ConflictError(err));
         }
@@ -28,12 +28,9 @@
     return app.del("/order/:order_id", function(req, res, next) {
       var orderId;
       orderId = req.params.order_id;
-      return Order.deleteOpen(orderId, function(err, destroyed) {
+      return OrderBook.deleteOpenOrder(orderId, function(err) {
         if (err) {
           return next(new restify.ConflictError(err));
-        }
-        if (!destroyed) {
-          return next(new restify.ConflictError("Order " + orderId + " could not be deleted."));
         }
         return res.send({
           order_id: orderId
