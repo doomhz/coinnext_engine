@@ -29,7 +29,7 @@ OrderBook =
         status:
           ne: MarketHelper.getOrderStatus "completed"
       order: [
-        ["unit_price", "DESC"]
+        ["unit_price", "ASC"]
         ["created_at", "ASC"]
       ]
     SellOrder.findAll(matchingOrdersQuery, {transaction: transaction}).complete callback
