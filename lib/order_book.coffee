@@ -8,7 +8,7 @@ math = require("mathjs")
 
 OrderBook =
 
-  findNext: (callback = ()->)->
+  findNextBuyOrder: (transaction, callback = ()->)->
     orderToMatchQuery =
       where:
         status:
@@ -16,50 +16,58 @@ OrderBook =
       order: [
         ["created_at", "ASC"]
       ]
-    BuyOrder.find(orderToMatchQuery).complete callback
+    BuyOrder.find(orderToMatchQuery, {transaction: transaction}).complete callback
 
-  findMatchingOrder: (orderToMatch, callback = ()->)->
+  findMatchingSellOrders: (buyOrderToMatch, transaction, callback = ()->)->
     matchingOrdersQuery =
       where:
-        buy_currency: MarketHelper.getCurrency orderToMatch.sell_currency
-        sell_currency: MarketHelper.getCurrency orderToMatch.buy_currency
+        buy_currency: MarketHelper.getCurrency buyOrderToMatch.sell_currency
+        sell_currency: MarketHelper.getCurrency buyOrderToMatch.buy_currency
+        unit_price:
+          lte: buyOrderToMatch.unit_price
         status:
           ne: MarketHelper.getOrderStatus "completed"
       order: [
+        ["unit_price", "DESC"]
         ["created_at", "ASC"]
       ]
-    if orderToMatch.action is "buy"
-      matchingOrdersQuery.where.unit_price =
-        lte: orderToMatch.unit_price
-    if orderToMatch.action is "sell"
-      matchingOrdersQuery.where.unit_price =
-        gte: orderToMatch.unit_price
-    SellOrder.find(matchingOrdersQuery).complete callback
+    SellOrder.findAll(matchingOrdersQuery, {transaction: transaction}).complete callback
 
   matchFirstOrder: (callback = ()->)->
-    OrderBook.findNext (err, orderToMatch)->
-      return err  if err
-      return callback()  if not orderToMatch
-      OrderBook.findMatchingOrder orderToMatch, (err, matchingOrder)->
-        return callback()  if not matchingOrder
-        GLOBAL.db.sequelize.transaction (transaction)->
-          matchResult = OrderBook.matchOrders orderToMatch, matchingOrder
+    GLOBAL.db.sequelize.transaction (transaction)->
+      OrderBook.findNextBuyOrder transaction, (err, buyOrderToMatch)->
+        return err  if err
+        return callback()  if not buyOrderToMatch
+        OrderBook.findMatchingSellOrders buyOrderToMatch, transaction, (err, matchingSellOrders)->
+          return callback()  if not matchingSellOrders.length
+          matchResults = OrderBook.matchMultipleOrders buyOrderToMatch, matchingSellOrders
           updateOrderCallback = (order, cb)->
+            return cb null, order  if not order.changed()
             order.save({transaction: transaction}).complete cb
-          async.each [orderToMatch, matchingOrder], updateOrderCallback, (err, result)->
+          async.each matchingSellOrders.concat(buyOrderToMatch), updateOrderCallback, (err, result)->
             if err
-              console.error "Could not match order #{orderToMatch.id} with #{matchingOrder.id} - #{JSON.stringify(err)}"
+              console.error "Could not match order #{buyOrderToMatch.id} with #{matchingOrder.id} - #{JSON.stringify(err)}"
               return transaction.rollback().success ()->
                 callback err
-            GLOBAL.db.Event.add "orders_match", matchResult, transaction, (err)->
+            GLOBAL.db.Event.addMatchOrders matchResults, transaction, (err)->
               if err
-                console.error "Could not add event for matching order #{orderToMatch.id} with #{matchingOrder.id} - #{JSON.stringify(err)}"
+                console.error "Could not add event for matching order #{buyOrderToMatch.id} - #{JSON.stringify(err)}"
                 return transaction.rollback().success ()->
                   callback err
               transaction.commit().success ()->
-                callback null, matchResult
+                callback null, matchResults
 
-  matchOrders: (orderToMatch, matchingOrder)->
+  matchMultipleOrders: (buyOrderToMatch, matchingSellOrders)->
+    matchResults = []
+    totalMatching = matchingSellOrders.length
+    index = 0
+    while buyOrderToMatch.left_amount > 0 and index < totalMatching
+      matchResult = @matchTwoOrders buyOrderToMatch, matchingSellOrders[index]
+      matchResults.push matchResult
+      index++
+    matchResults
+
+  matchTwoOrders: (orderToMatch, matchingOrder)->
     amountToMatch = if matchingOrder.left_amount > orderToMatch.left_amount then orderToMatch.left_amount else matchingOrder.left_amount
     matchResult = []
     matchResult.push @matchOrderAmount orderToMatch, amountToMatch, matchingOrder.unit_price
@@ -85,9 +93,8 @@ OrderBook =
 
   calculateResultAmount: (order, amount, unitPrice)->
     return amount  if order.action is "buy"
-    amount = MarketHelper.convertFromBigint amount
     unitPrice = MarketHelper.convertFromBigint unitPrice
-    MarketHelper.convertToBigint math.multiply(amount, unitPrice)
+    math.multiply(amount, unitPrice)
 
   calculateFee: (order, amount)->
     math.select(amount).divide(100).multiply(MarketHelper.getTradeFee()).done()

@@ -21,8 +21,18 @@ describe "OrderBook", ->
         {id: 4, external_order_id: 12, type: "limit", buy_currency: "BTC", sell_currency: "LTC", amount: MarketHelper.convertToBigint(4), unit_price: MarketHelper.convertToBigint(0.1), status: "open", created_at: now - 2000}
       ]
       matchingResult = [
-        {id: 1, order_id: 5, matched_amount: 200000000, result_amount: 199600000, fee: 400000, unit_price: MarketHelper.convertToBigint(0.1), status: "partiallyCompleted"}
-        {id: 2, order_id: 8, matched_amount: 200000000, result_amount: 19960000, fee: 40000, unit_price: MarketHelper.convertToBigint(0.1), status: "completed"}
+        [
+          {id: 1, order_id: 5, matched_amount: 200000000, result_amount: 199600000, fee: 400000, unit_price: MarketHelper.convertToBigint(0.1), status: "partiallyCompleted"}
+          {id: 2, order_id: 8, matched_amount: 200000000, result_amount: 19960000, fee: 40000, unit_price: MarketHelper.convertToBigint(0.1), status: "completed"}
+        ]
+        [
+          {id: 1, order_id: 5, matched_amount: 300000000, result_amount: 299400000, fee: 600000, unit_price: MarketHelper.convertToBigint(0.1), status: "partiallyCompleted"}
+          {id: 3, order_id: 10, matched_amount: 300000000, result_amount: 29940000, fee: 60000, unit_price: MarketHelper.convertToBigint(0.1), status: "completed"}
+        ]
+        [
+          {id: 1, order_id: 5, matched_amount: 400000000, result_amount: 399200000, fee: 800000, unit_price: MarketHelper.convertToBigint(0.1), status: "partiallyCompleted"}
+          {id: 4, order_id: 12, matched_amount: 400000000, result_amount: 39920000, fee: 80000, unit_price: MarketHelper.convertToBigint(0.1), status: "completed"}
+        ]
       ]
 
       beforeEach (done)->
@@ -30,9 +40,11 @@ describe "OrderBook", ->
           GLOBAL.db.SellOrder.bulkCreate(sellOrdersData).success ()->
             done()
 
-      it "returns the mathcing result", (done)->
+      it "returns the matching result", (done)->
         OrderBook.matchFirstOrder (err, result)->
-          result.should.match matchingResult
+          result.length.should.eql 3
+          for res, index in result
+            res.should.eql matchingResult[index]
           done()
 
       it "sets the big order as partiallyCompleted", (done)->
@@ -41,37 +53,36 @@ describe "OrderBook", ->
             order.status.should.eql "partiallyCompleted"
             done()
 
-      it "sets the matching order as completed", (done)->
+      it "sets the matching orders as completed", (done)->
         OrderBook.matchFirstOrder (err, affectedOrderIds)->
-          GLOBAL.db.SellOrder.find(2).success (order)->
-            order.status.should.eql "completed"
-            done()
-
-      it "does not process the older orders", (done)->
-        OrderBook.matchFirstOrder (err, affectedOrderIds)->
-          GLOBAL.db.SellOrder.findAll({where: {id: in: [3, 4, 5]}}).success (orders)->
-            for order in orders
-              order.status.should.eql "open"
+          GLOBAL.db.SellOrder.findAll({where: {status: MarketHelper.getOrderStatus("completed"), id: [2, 3, 4]}}).success (orders)->
+            orders.length.should.eql 3
             done()
 
       it "sets the big order amounts", (done)->
         OrderBook.matchFirstOrder (err, affectedOrderIds)->
           GLOBAL.db.BuyOrder.find(1).success (order)->
-            order.matched_amount.should.eql 200000000
-            order.result_amount.should.eql 199600000
-            order.fee.should.eql 400000
+            order.matched_amount.should.eql 900000000
+            order.result_amount.should.eql 898200000
+            order.fee.should.eql 1800000
             done()
 
-      it "sets the matched order amounts", (done)->
+      it "sets the matched orders amounts", (done)->
         OrderBook.matchFirstOrder (err, affectedOrderIds)->
-          GLOBAL.db.SellOrder.find(2).success (order)->
-            order.matched_amount.should.eql 200000000
-            order.result_amount.should.eql 19960000
-            order.fee.should.eql 40000
+          GLOBAL.db.SellOrder.findAll({where: {id: [2, 3, 4]}}).success (orders)->
+            expectedData =
+              2: {matched_amount: 200000000, result_amount: 19960000, fee: 40000}
+              3: {matched_amount: 300000000, result_amount: 29940000, fee: 60000}
+              4: {matched_amount: 400000000, result_amount: 39920000, fee: 80000}
+            for order in orders
+              order.matched_amount.should.eql expectedData[order.id].matched_amount
+              order.result_amount.should.eql expectedData[order.id].result_amount
+              order.fee.should.eql expectedData[order.id].fee
             done()
 
       it "adds a matching event about the last match", (done)->
         OrderBook.matchFirstOrder (err, result)->
-          GLOBAL.db.Event.findNext (err, event)->
-            event.loadout.should.eql matchingResult
+          GLOBAL.db.Event.findAll().complete (err, events)->
+            for event, index in events
+              event.loadout.should.eql matchingResult[index]
             done()

@@ -56,6 +56,23 @@
             transaction: transaction
           }).complete(callback);
         },
+        addMatchOrders: function(bulkLoadout, transaction, callback) {
+          var data, loadout, _i, _len;
+          if (callback == null) {
+            callback = function() {};
+          }
+          data = [];
+          for (_i = 0, _len = bulkLoadout.length; _i < _len; _i++) {
+            loadout = bulkLoadout[_i];
+            data.push({
+              type: "orders_match",
+              loadout: loadout
+            });
+          }
+          return Event.bulkCreate(data, {
+            transaction: transaction
+          }).complete(callback);
+        },
         findNext: function(callback) {
           var query;
           if (callback == null) {

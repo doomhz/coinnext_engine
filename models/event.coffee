@@ -37,6 +37,14 @@ module.exports = (sequelize, DataTypes) ->
         add: (type, loadout, transaction, callback = ()->)->
           Event.create({type: type, loadout: loadout}, {transaction: transaction}).complete callback
 
+        addMatchOrders: (bulkLoadout, transaction, callback = ()->)->
+          data = []
+          for loadout in bulkLoadout
+            data.push
+              type: "orders_match"
+              loadout: loadout
+          Event.bulkCreate(data, {transaction: transaction}).complete callback
+
         findNext: (callback = ()->)->
           query =
             where:
