@@ -43,6 +43,7 @@ module.exports = (sequelize, DataTypes) ->
             data.push
               type: "orders_match"
               loadout: loadout
+              status: "unsent"
           Event.bulkCreate(data, {transaction: transaction}).complete callback
 
         findNext: (callback = ()->)->

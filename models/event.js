@@ -66,7 +66,8 @@
             loadout = bulkLoadout[_i];
             data.push({
               type: "orders_match",
-              loadout: loadout
+              loadout: loadout,
+              status: "unsent"
             });
           }
           return Event.bulkCreate(data, {

@@ -8,17 +8,18 @@ describe "OrderBook", ->
     GLOBAL.db.sequelize.sync({force: true}).complete ()->
       done()
 
-  describe "matchFirstOrder", ()->
+  describe "matchBuyOrders", ()->
     describe "when there is a big buy order and a couple of small orders to match", ()->
       now = Date.now()
       buyOrdersData = [
         {id: 1, external_order_id: 5, type: "limit", buy_currency: "LTC", sell_currency: "BTC", amount: MarketHelper.convertToBigint(10), unit_price: MarketHelper.convertToBigint(0.1), status: "open", created_at: now - 5000}
-        {id: 5, external_order_id: 13, type: "limit", action: "buy", buy_currency: "LTC", sell_currency: "BTC", amount: MarketHelper.convertToBigint(5), unit_price: MarketHelper.convertToBigint(0.1), status: "open", created_at: now - 1500}
+        {id: 5, external_order_id: 13, type: "limit", action: "buy", buy_currency: "LTC", sell_currency: "BTC", amount: MarketHelper.convertToBigint(5), unit_price: MarketHelper.convertToBigint(0.2), status: "open", created_at: now - 1500}
       ]
       sellOrdersData = [
         {id: 2, external_order_id: 8, type: "limit", buy_currency: "BTC", sell_currency: "LTC", amount: MarketHelper.convertToBigint(2), unit_price: MarketHelper.convertToBigint(0.1), status: "open", created_at: now - 4000}
         {id: 3, external_order_id: 10, type: "limit", buy_currency: "BTC", sell_currency: "LTC", amount: MarketHelper.convertToBigint(3), unit_price: MarketHelper.convertToBigint(0.1), status: "open", created_at: now - 3000}
         {id: 4, external_order_id: 12, type: "limit", buy_currency: "BTC", sell_currency: "LTC", amount: MarketHelper.convertToBigint(4), unit_price: MarketHelper.convertToBigint(0.1), status: "open", created_at: now - 2000}
+        {id: 6, external_order_id: 14, type: "limit", buy_currency: "BTC", sell_currency: "LTC", amount: MarketHelper.convertToBigint(5), unit_price: MarketHelper.convertToBigint(0.2), status: "open", created_at: now - 1000}
       ]
       matchingResult = [
         [
@@ -34,6 +35,12 @@ describe "OrderBook", ->
           {id: 4, order_id: 12, matched_amount: 400000000, result_amount: 39920000, fee: 80000, unit_price: MarketHelper.convertToBigint(0.1), status: "completed"}
         ]
       ]
+      matchingResult2 = [
+        [
+          {id: 5, order_id: 13, matched_amount: 500000000, result_amount: 499000000, fee: 1000000, unit_price: MarketHelper.convertToBigint(0.2), status: "completed"}
+          {id: 6, order_id: 14, matched_amount: 500000000, result_amount: 99800000, fee: 200000, unit_price: MarketHelper.convertToBigint(0.2), status: "completed"}
+        ]
+      ]
 
       beforeEach (done)->
         GLOBAL.db.BuyOrder.bulkCreate(buyOrdersData).success ()->
@@ -41,26 +48,30 @@ describe "OrderBook", ->
             done()
 
       it "returns the matching result", (done)->
-        OrderBook.matchFirstOrder (err, result)->
-          result.length.should.eql 3
-          for res, index in result
+        OrderBook.matchBuyOrders (err, result)->
+          result.length.should.eql 2
+          result[0].length.should.eql 3
+          result[1].length.should.eql 1
+          for res, index in result[0]
             res.should.eql matchingResult[index]
+          for res, index in result[1]
+            res.should.eql matchingResult2[index]
           done()
 
       it "sets the big order as partiallyCompleted", (done)->
-        OrderBook.matchFirstOrder (err, affectedOrderIds)->
+        OrderBook.matchBuyOrders (err, affectedOrderIds)->
           GLOBAL.db.BuyOrder.find(1).success (order)->
             order.status.should.eql "partiallyCompleted"
             done()
 
       it "sets the matching orders as completed", (done)->
-        OrderBook.matchFirstOrder (err, affectedOrderIds)->
+        OrderBook.matchBuyOrders (err, affectedOrderIds)->
           GLOBAL.db.SellOrder.findAll({where: {status: MarketHelper.getOrderStatus("completed"), id: [2, 3, 4]}}).success (orders)->
             orders.length.should.eql 3
             done()
 
       it "sets the big order amounts", (done)->
-        OrderBook.matchFirstOrder (err, affectedOrderIds)->
+        OrderBook.matchBuyOrders (err, affectedOrderIds)->
           GLOBAL.db.BuyOrder.find(1).success (order)->
             order.matched_amount.should.eql 900000000
             order.result_amount.should.eql 898200000
@@ -68,7 +79,7 @@ describe "OrderBook", ->
             done()
 
       it "sets the matched orders amounts", (done)->
-        OrderBook.matchFirstOrder (err, affectedOrderIds)->
+        OrderBook.matchBuyOrders (err, affectedOrderIds)->
           GLOBAL.db.SellOrder.findAll({where: {id: [2, 3, 4]}}).success (orders)->
             expectedData =
               2: {matched_amount: 200000000, result_amount: 19960000, fee: 40000}
@@ -81,8 +92,11 @@ describe "OrderBook", ->
             done()
 
       it "adds a matching event about the last match", (done)->
-        OrderBook.matchFirstOrder (err, result)->
+        OrderBook.matchBuyOrders (err, result)->
           GLOBAL.db.Event.findAll().complete (err, events)->
             for event, index in events
-              event.loadout.should.eql matchingResult[index]
+              if index < 3
+                event.loadout.should.eql matchingResult[index]
+              else
+                event.loadout.should.eql matchingResult2[index - 3]
             done()

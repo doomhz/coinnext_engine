@@ -8,7 +8,7 @@ GLOBAL.db = require('./models/index');
 var OrderBook = require("./lib/order_book")
 
 var processOrders = function () {
-  OrderBook.matchFirstOrder(function () {
+  OrderBook.matchBuyOrders(function () {
     setTimeout(processOrders, 100);
   });
 };

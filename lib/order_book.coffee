@@ -8,7 +8,7 @@ math = require("mathjs")
 
 OrderBook =
 
-  findNextBuyOrder: (transaction, callback = ()->)->
+  findBuyOrdersToMatch: (transaction, callback = ()->)->
     orderToMatchQuery =
       where:
         status:
@@ -16,7 +16,8 @@ OrderBook =
       order: [
         ["created_at", "ASC"]
       ]
-    BuyOrder.find(orderToMatchQuery, {transaction: transaction}).complete callback
+      attributes: ["id"]
+    BuyOrder.findAll(orderToMatchQuery, {transaction: transaction}).complete callback
 
   findMatchingSellOrders: (buyOrderToMatch, transaction, callback = ()->)->
     matchingOrdersQuery =
@@ -33,29 +34,36 @@ OrderBook =
       ]
     SellOrder.findAll(matchingOrdersQuery, {transaction: transaction}).complete callback
 
-  matchFirstOrder: (callback = ()->)->
+  matchBuyOrders: (callback = ()->)->
     GLOBAL.db.sequelize.transaction (transaction)->
-      OrderBook.findNextBuyOrder transaction, (err, buyOrderToMatch)->
+      OrderBook.findBuyOrdersToMatch transaction, (err, buyOrders)->
+        matchOrderCallback = (o, cb)->
+          OrderBook.matchBuyOrderById o.id, transaction, cb
+        async.mapSeries buyOrders, matchOrderCallback, (err, result)->
+          if err
+            return transaction.rollback().success ()->
+              console.error err
+              callback err
+          if result
+            return transaction.commit().success ()->
+              callback null, result
+          callback()
+
+  matchBuyOrderById: (id, transaction, callback = ()->)->
+    BuyOrder.find(id, {transaction: transaction}).complete (err, buyOrderToMatch)->
+      return err  if err
+      OrderBook.findMatchingSellOrders buyOrderToMatch, transaction, (err, matchingSellOrders)->
         return err  if err
-        return callback()  if not buyOrderToMatch
-        OrderBook.findMatchingSellOrders buyOrderToMatch, transaction, (err, matchingSellOrders)->
-          return callback()  if not matchingSellOrders.length
-          matchResults = OrderBook.matchMultipleOrders buyOrderToMatch, matchingSellOrders
-          updateOrderCallback = (order, cb)->
-            return cb null, order  if not order.changed()
-            order.save({transaction: transaction}).complete cb
-          async.each matchingSellOrders.concat(buyOrderToMatch), updateOrderCallback, (err, result)->
-            if err
-              console.error "Could not match order #{buyOrderToMatch.id} with #{matchingOrder.id} - #{JSON.stringify(err)}"
-              return transaction.rollback().success ()->
-                callback err
-            GLOBAL.db.Event.addMatchOrders matchResults, transaction, (err)->
-              if err
-                console.error "Could not add event for matching order #{buyOrderToMatch.id} - #{JSON.stringify(err)}"
-                return transaction.rollback().success ()->
-                  callback err
-              transaction.commit().success ()->
-                callback null, matchResults
+        return callback null, []  if not matchingSellOrders.length
+        matchResults = OrderBook.matchMultipleOrders buyOrderToMatch, matchingSellOrders
+        updateOrderCallback = (order, cb)->
+          return cb null, order  if not order.changed()
+          order.save({transaction: transaction}).complete cb
+        async.each matchingSellOrders.concat(buyOrderToMatch), updateOrderCallback, (err, result)->
+          return callback "Could not match order #{buyOrderToMatch.id} with #{matchingOrder.id} - #{JSON.stringify(err)}"  if err
+          GLOBAL.db.Event.addMatchOrders matchResults, transaction, (err)->
+            return callback "Could not add event for matching order #{buyOrderToMatch.id} - #{JSON.stringify(err)}"  if err
+            callback null, matchResults
 
   matchMultipleOrders: (buyOrderToMatch, matchingSellOrders)->
     matchResults = []
