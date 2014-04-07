@@ -5,9 +5,10 @@ var config = JSON.parse(fs.readFileSync(process.cwd() + '/config.json', encoding
 // Configure globals
 GLOBAL.appConfig = function () {return config;};
 GLOBAL.db = require('./models/index');
+var OrderBook = require("./lib/order_book")
 
 var processOrders = function () {
-  GLOBAL.db.Order.matchFirstOrder(function () {
+  OrderBook.matchFirstOrder(function () {
     setTimeout(processOrders, 100);
   });
 };
