@@ -12,7 +12,7 @@ describe "OrderBook", ->
     describe "when there is a big buy order and a couple of small orders to match", ()->
       now = Date.now()
       buyOrdersData = [
-        {id: 1, external_order_id: 5, type: "limit", buy_currency: "LTC", sell_currency: "BTC", amount: MarketHelper.convertToBigint(10), unit_price: MarketHelper.convertToBigint(0.1), status: "open", created_at: now - 5000}
+        {id: 1, external_order_id: 5, type: "limit", buy_currency: "LTC", sell_currency: "BTC", amount: MarketHelper.convertToBigint(10), unit_price: MarketHelper.convertToBigint(0.3), status: "open", created_at: now - 5000}
         {id: 5, external_order_id: 13, type: "limit", action: "buy", buy_currency: "LTC", sell_currency: "BTC", amount: MarketHelper.convertToBigint(5), unit_price: MarketHelper.convertToBigint(0.2), status: "open", created_at: now - 1500}
       ]
       sellOrdersData = [
@@ -34,11 +34,15 @@ describe "OrderBook", ->
           {id: 1, order_id: 5, matched_amount: 400000000, result_amount: 399200000, fee: 800000, unit_price: MarketHelper.convertToBigint(0.1), status: "partiallyCompleted"}
           {id: 4, order_id: 12, matched_amount: 400000000, result_amount: 39920000, fee: 80000, unit_price: MarketHelper.convertToBigint(0.1), status: "completed"}
         ]
+        [
+          {id: 1, order_id: 5, matched_amount: 100000000, result_amount: 99800000, fee: 200000, unit_price: MarketHelper.convertToBigint(0.2), status: "completed"}
+          {id: 6, order_id: 14, matched_amount: 100000000, result_amount: 19960000, fee: 40000, unit_price: MarketHelper.convertToBigint(0.2), status: "partiallyCompleted"}
+        ]
       ]
       matchingResult2 = [
         [
-          {id: 5, order_id: 13, matched_amount: 500000000, result_amount: 499000000, fee: 1000000, unit_price: MarketHelper.convertToBigint(0.2), status: "completed"}
-          {id: 6, order_id: 14, matched_amount: 500000000, result_amount: 99800000, fee: 200000, unit_price: MarketHelper.convertToBigint(0.2), status: "completed"}
+          {id: 5, order_id: 13, matched_amount: 400000000, result_amount: 399200000, fee: 800000, unit_price: MarketHelper.convertToBigint(0.2), status: "partiallyCompleted"}
+          {id: 6, order_id: 14, matched_amount: 400000000, result_amount: 79840000, fee: 160000, unit_price: MarketHelper.convertToBigint(0.2), status: "completed"}
         ]
       ]
 
@@ -50,7 +54,7 @@ describe "OrderBook", ->
       it "returns the matching result", (done)->
         OrderBook.matchBuyOrders (err, result)->
           result.length.should.eql 2
-          result[0].length.should.eql 3
+          result[0].length.should.eql 4
           result[1].length.should.eql 1
           for res, index in result[0]
             res.should.eql matchingResult[index]
@@ -58,10 +62,10 @@ describe "OrderBook", ->
             res.should.eql matchingResult2[index]
           done()
 
-      it "sets the big order as partiallyCompleted", (done)->
+      it "sets the big order as completed", (done)->
         OrderBook.matchBuyOrders (err, affectedOrderIds)->
           GLOBAL.db.BuyOrder.find(1).success (order)->
-            order.status.should.eql "partiallyCompleted"
+            order.status.should.eql "completed"
             done()
 
       it "sets the matching orders as completed", (done)->
@@ -73,9 +77,9 @@ describe "OrderBook", ->
       it "sets the big order amounts", (done)->
         OrderBook.matchBuyOrders (err, affectedOrderIds)->
           GLOBAL.db.BuyOrder.find(1).success (order)->
-            order.matched_amount.should.eql 900000000
-            order.result_amount.should.eql 898200000
-            order.fee.should.eql 1800000
+            order.matched_amount.should.eql 1000000000
+            order.result_amount.should.eql 998000000
+            order.fee.should.eql 2000000
             done()
 
       it "sets the matched orders amounts", (done)->
@@ -95,17 +99,17 @@ describe "OrderBook", ->
         OrderBook.matchBuyOrders (err, result)->
           GLOBAL.db.Event.findAll().complete (err, events)->
             for event, index in events
-              if index < 3
+              if index < 4
                 event.loadout.should.eql matchingResult[index]
               else
-                event.loadout.should.eql matchingResult2[index - 3]
+                event.loadout.should.eql matchingResult2[index - 4]
             done()
 
 
     describe "when there are multiple orders to match", ()->
       now = Date.now()
       buyOrdersData = [
-        {id: 1, external_order_id: 5, type: "limit", buy_currency: "LTC", sell_currency: "BTC", amount: MarketHelper.convertToBigint(10), unit_price: MarketHelper.convertToBigint(0.2), status: "open", created_at: now - 7000}
+        {id: 1, external_order_id: 5, type: "limit", buy_currency: "LTC", sell_currency: "BTC", amount: MarketHelper.convertToBigint(10), unit_price: MarketHelper.convertToBigint(0.1), status: "open", created_at: now - 7000}
         {id: 2, external_order_id: 6, type: "limit", buy_currency: "LTC", sell_currency: "BTC", amount: MarketHelper.convertToBigint(10), unit_price: MarketHelper.convertToBigint(0.2), status: "open", created_at: now - 5000}
       ]
       sellOrdersData = [
@@ -117,14 +121,14 @@ describe "OrderBook", ->
           GLOBAL.db.SellOrder.bulkCreate(sellOrdersData).success ()->
             done()
 
-      it "matches the oldest one first", (done)->
+      it "matches the one with the highest unit price first and with the oldest creation date", (done)->
         OrderBook.matchBuyOrders (err, result)->
-          GLOBAL.db.BuyOrder.find(1).success (olderOrder)->
-            GLOBAL.db.BuyOrder.find(2).success (newerOrder)->
-              olderOrder.matched_amount.should.eql 1000000000
-              newerOrder.matched_amount.should.eql 0
-              olderOrder.status.should.eql "completed"
-              newerOrder.status.should.eql "open"
+          GLOBAL.db.BuyOrder.find(1).success (lowerOrder)->
+            GLOBAL.db.BuyOrder.find(2).success (higherOrder)->
+              higherOrder.matched_amount.should.eql 1000000000
+              lowerOrder.matched_amount.should.eql 0
+              higherOrder.status.should.eql "completed"
+              lowerOrder.status.should.eql "open"
               done()
 
 

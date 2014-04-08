@@ -14,6 +14,7 @@ OrderBook =
         status:
           ne: MarketHelper.getOrderStatus "completed"
       order: [
+        ["unit_price", "DESC"]
         ["created_at", "ASC"]
       ]
       attributes: ["id"]
