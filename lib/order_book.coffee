@@ -78,14 +78,15 @@ OrderBook =
 
   matchTwoOrders: (orderToMatch, matchingOrder)->
     amountToMatch = if matchingOrder.left_amount > orderToMatch.left_amount then orderToMatch.left_amount else matchingOrder.left_amount
+    unitPrice = if matchingOrder.created_at < orderToMatch.created_at then matchingOrder.unit_price else orderToMatch.unit_price
     matchResult = []
-    matchResult.push @matchOrderAmount orderToMatch, amountToMatch, matchingOrder.unit_price
-    matchResult.push @matchOrderAmount matchingOrder, amountToMatch, matchingOrder.unit_price
+    matchResult.push @matchOrderAmount orderToMatch, amountToMatch, unitPrice
+    matchResult.push @matchOrderAmount matchingOrder, amountToMatch, unitPrice
     matchResult
 
   matchOrderAmount: (order, amount, unitPrice)->
     resultAmount = @calculateResultAmount order, amount, unitPrice
-    fee = @calculateFee order, resultAmount
+    fee = @calculateFee resultAmount
     resultAmount = math.add resultAmount, -fee
     @addMatchedAmount order, amount
     @addResultAmount order, resultAmount
@@ -105,7 +106,7 @@ OrderBook =
     unitPrice = MarketHelper.convertFromBigint unitPrice
     math.multiply(amount, unitPrice)
 
-  calculateFee: (order, amount)->
+  calculateFee: (amount)->
     math.select(amount).divide(100).multiply(MarketHelper.getTradeFee()).done()
 
   addMatchedAmount: (order, amount)->

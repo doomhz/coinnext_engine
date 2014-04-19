@@ -9,7 +9,7 @@
   "dependencies": {
     "restify": "latest"
     , "coffee-script": "latest"
-    ,"underscore": "latest"
+    , "underscore": "latest"
     , "underscore.string": "latest"
     , "date-utils": "latest"
     , "winston": "latest"

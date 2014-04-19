@@ -23,20 +23,20 @@ describe "OrderBook", ->
       ]
       matchingResult = [
         [
-          {id: 1, order_id: 5, matched_amount: 200000000, result_amount: 199600000, fee: 400000, unit_price: MarketHelper.convertToBigint(0.1), status: "partiallyCompleted"}
-          {id: 2, order_id: 8, matched_amount: 200000000, result_amount: 19960000, fee: 40000, unit_price: MarketHelper.convertToBigint(0.1), status: "completed"}
+          {id: 1, order_id: 5, matched_amount: 200000000, result_amount: 199600000, fee: 400000, unit_price: MarketHelper.convertToBigint(0.3), status: "partiallyCompleted"}
+          {id: 2, order_id: 8, matched_amount: 200000000, result_amount: 59880000, fee: 120000, unit_price: MarketHelper.convertToBigint(0.3), status: "completed"}
         ]
         [
-          {id: 1, order_id: 5, matched_amount: 300000000, result_amount: 299400000, fee: 600000, unit_price: MarketHelper.convertToBigint(0.1), status: "partiallyCompleted"}
-          {id: 3, order_id: 10, matched_amount: 300000000, result_amount: 29940000, fee: 60000, unit_price: MarketHelper.convertToBigint(0.1), status: "completed"}
+          {id: 1, order_id: 5, matched_amount: 300000000, result_amount: 299400000, fee: 600000, unit_price: MarketHelper.convertToBigint(0.3), status: "partiallyCompleted"}
+          {id: 3, order_id: 10, matched_amount: 300000000, result_amount: 89820000, fee: 180000, unit_price: MarketHelper.convertToBigint(0.3), status: "completed"}
         ]
         [
-          {id: 1, order_id: 5, matched_amount: 400000000, result_amount: 399200000, fee: 800000, unit_price: MarketHelper.convertToBigint(0.1), status: "partiallyCompleted"}
-          {id: 4, order_id: 12, matched_amount: 400000000, result_amount: 39920000, fee: 80000, unit_price: MarketHelper.convertToBigint(0.1), status: "completed"}
+          {id: 1, order_id: 5, matched_amount: 400000000, result_amount: 399200000, fee: 800000, unit_price: MarketHelper.convertToBigint(0.3), status: "partiallyCompleted"}
+          {id: 4, order_id: 12, matched_amount: 400000000, result_amount: 119760000, fee: 240000, unit_price: MarketHelper.convertToBigint(0.3), status: "completed"}
         ]
         [
-          {id: 1, order_id: 5, matched_amount: 100000000, result_amount: 99800000, fee: 200000, unit_price: MarketHelper.convertToBigint(0.2), status: "completed"}
-          {id: 6, order_id: 14, matched_amount: 100000000, result_amount: 19960000, fee: 40000, unit_price: MarketHelper.convertToBigint(0.2), status: "partiallyCompleted"}
+          {id: 1, order_id: 5, matched_amount: 100000000, result_amount: 99800000, fee: 200000, unit_price: MarketHelper.convertToBigint(0.3), status: "completed"}
+          {id: 6, order_id: 14, matched_amount: 100000000, result_amount: 29940000, fee: 60000, unit_price: MarketHelper.convertToBigint(0.3), status: "partiallyCompleted"}
         ]
       ]
       matchingResult2 = [
@@ -86,9 +86,9 @@ describe "OrderBook", ->
         OrderBook.matchBuyOrders (err, affectedOrderIds)->
           GLOBAL.db.SellOrder.findAll({where: {id: [2, 3, 4]}}).success (orders)->
             expectedData =
-              2: {matched_amount: 200000000, result_amount: 19960000, fee: 40000}
-              3: {matched_amount: 300000000, result_amount: 29940000, fee: 60000}
-              4: {matched_amount: 400000000, result_amount: 39920000, fee: 80000}
+              2: {matched_amount: 200000000, result_amount: 59880000, fee: 120000}
+              3: {matched_amount: 300000000, result_amount: 89820000, fee: 180000}
+              4: {matched_amount: 400000000, result_amount: 119760000, fee: 240000}
             for order in orders
               order.matched_amount.should.eql expectedData[order.id].matched_amount
               order.result_amount.should.eql expectedData[order.id].result_amount
@@ -157,3 +157,43 @@ describe "OrderBook", ->
               cheaperPriceOrder.status.should.eql "completed"
               higherPriceOrder.status.should.eql "partiallyCompleted"
               done()
+
+
+  describe "matchTwoOrders", ()->
+    now = Date.now()
+    buyOrder = null
+    sellOrder = null
+    buyOrderData = {id: 1, external_order_id: 5, type: "limit", buy_currency: "LTC", sell_currency: "BTC", amount: MarketHelper.convertToBigint(9), unit_price: MarketHelper.convertToBigint(0.2), status: "open"}
+    sellOrderData = {id: 2, external_order_id: 8, type: "limit", buy_currency: "BTC", sell_currency: "LTC", amount: MarketHelper.convertToBigint(9), unit_price: MarketHelper.convertToBigint(0.1), status: "open"}
+
+    describe "when the matching order has a lower creation date", ()->
+      matchingResult = [
+        {id: 1, order_id: 5, matched_amount: 900000000, result_amount: 898200000, fee: 1800000, unit_price: 10000000, status: "completed"}
+        {id: 2, order_id: 8, matched_amount: 900000000, result_amount: 89820000, fee: 180000, unit_price: 10000000, status: "completed"}
+      ]
+
+      beforeEach ()->
+        buyOrder = GLOBAL.db.BuyOrder.build buyOrderData
+        sellOrder = GLOBAL.db.SellOrder.build sellOrderData
+        buyOrder.created_at = now - 400
+        sellOrder.created_at = now - 500
+
+      it "matches the orders at the matching order unit price", ()->
+        result = OrderBook.matchTwoOrders buyOrder, sellOrder
+        result.should.eql matchingResult
+
+    describe "when the matching order has a higher creation date", ()->
+      matchingResult = [
+        {id: 1, order_id: 5, matched_amount: 900000000, result_amount: 898200000, fee: 1800000, unit_price: 20000000, status: "completed"}
+        {id: 2, order_id: 8, matched_amount: 900000000, result_amount: 179640000, fee: 360000, unit_price: 20000000, status: "completed"}
+      ]
+
+      beforeEach ()->
+        buyOrder = GLOBAL.db.BuyOrder.build buyOrderData
+        sellOrder = GLOBAL.db.SellOrder.build sellOrderData
+        buyOrder.created_at = now - 500
+        sellOrder.created_at = now - 400
+
+      it "matches the orders at the matching order unit price", ()->
+        result = OrderBook.matchTwoOrders buyOrder, sellOrder
+        result.should.eql matchingResult
