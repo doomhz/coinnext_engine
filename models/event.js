@@ -109,7 +109,7 @@
                   response = {};
                 }
                 if (err || response.statusCode !== 200) {
-                  err = "" + response.statusCode + " - Could not send event " + event.id + " to " + uri + " - " + (JSON.stringify(err)) + " - " + (JSON.stringify(body));
+                  err = "" + response.statusCode + " - Could not send event " + event.id + " to " + uri + " - " + (JSON.stringify(err)) + " - " + body;
                   console.log(err);
                   return callback(err);
                 }
