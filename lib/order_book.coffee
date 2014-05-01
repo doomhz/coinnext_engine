@@ -61,7 +61,7 @@ OrderBook =
           return cb null, order  if not order.changed()
           order.save({transaction: transaction}).complete cb
         async.each matchingSellOrders.concat(buyOrderToMatch), updateOrderCallback, (err, result)->
-          return callback "Could not match order #{buyOrderToMatch.id} with #{matchingOrder.id} - #{JSON.stringify(err)}"  if err
+          return callback "Could not match order #{buyOrderToMatch.id} with #{matchingSellOrders.id} - #{JSON.stringify(err)}"  if err
           GLOBAL.db.Event.addMatchOrders matchResults, transaction, (err)->
             return callback "Could not add event for matching order #{buyOrderToMatch.id} - #{JSON.stringify(err)}"  if err
             callback null, matchResults
