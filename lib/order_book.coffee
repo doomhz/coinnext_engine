@@ -107,7 +107,7 @@ OrderBook =
     math.multiply(amount, unitPrice)
 
   calculateFee: (amount)->
-    math.select(amount).divide(100).multiply(MarketHelper.getTradeFee()).round().done()
+    math.round math.select(amount).divide(100).multiply(MarketHelper.getTradeFee()).done(), 0
 
   addMatchedAmount: (order, amount)->
     order.matched_amount = math.add order.matched_amount, amount
