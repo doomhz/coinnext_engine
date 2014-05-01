@@ -14,3 +14,5 @@ var processOrders = function () {
 };
 
 processOrders();
+
+console.log(new Date() + " - processing orders...");

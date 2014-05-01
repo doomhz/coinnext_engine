@@ -13,3 +13,5 @@ var processEvents = function () {
 }
 
 processEvents();
+
+console.log(new Date() + " - processing events...");
