@@ -197,3 +197,9 @@ describe "OrderBook", ->
       it "matches the orders at the matching order unit price", ()->
         result = OrderBook.matchTwoOrders buyOrder, sellOrder
         result.should.eql matchingResult
+
+
+  describe "calculateFee", ()->
+    describe "when the fee is lower than 8 decimals", ()->
+      it "rounds the result", ()->
+        OrderBook.calculateFee(155200).should.eql 310

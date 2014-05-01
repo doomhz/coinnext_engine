@@ -52,7 +52,7 @@
         defaultValue: 0,
         allowNull: false,
         validate: {
-          isFloat: true,
+          isInt: true,
           notNull: true
         }
       },
@@ -60,28 +60,28 @@
         type: DataTypes.BIGINT.UNSIGNED,
         defaultValue: 0,
         validate: {
-          isFloat: true
+          isInt: true
         }
       },
       result_amount: {
         type: DataTypes.BIGINT.UNSIGNED,
         defaultValue: 0,
         validate: {
-          isFloat: true
+          isInt: true
         }
       },
       fee: {
         type: DataTypes.BIGINT.UNSIGNED,
         defaultValue: 0,
         validate: {
-          isFloat: true
+          isInt: true
         }
       },
       unit_price: {
         type: DataTypes.BIGINT.UNSIGNED,
         defaultValue: 0,
         validate: {
-          isFloat: true
+          isInt: true
         }
       },
       status: {
