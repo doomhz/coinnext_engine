@@ -199,6 +199,17 @@ describe "OrderBook", ->
         result.should.eql matchingResult
 
 
+  describe "calculateResultAmount", ()->
+    describe "when the order type is sell", ()->
+      order =
+        action: "sell"
+      amount = 4600324
+      unitPrice = 2000000
+      
+      it "rounds the result", ()->
+        OrderBook.calculateResultAmount(order, amount, unitPrice).should.eql 92006
+
+
   describe "calculateFee", ()->
     describe "when the fee is lower than 8 decimals", ()->
       it "rounds the result", ()->

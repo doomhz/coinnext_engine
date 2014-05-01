@@ -60,7 +60,7 @@ OrderBook =
         updateOrderCallback = (order, cb)->
           return cb null, order  if not order.changed()
           order.save({transaction: transaction}).complete cb
-        async.each matchingSellOrders.concat(buyOrderToMatch), updateOrderCallback, (err, result)->
+        async.mapSeries matchingSellOrders.concat(buyOrderToMatch), updateOrderCallback, (err, result)->
           return callback "Could not match order #{buyOrderToMatch.id} - #{JSON.stringify(err)}"  if err
           GLOBAL.db.Event.addMatchOrders matchResults, transaction, (err)->
             return callback "Could not add event for matching order #{buyOrderToMatch.id} - #{JSON.stringify(err)}"  if err
@@ -104,7 +104,7 @@ OrderBook =
   calculateResultAmount: (order, amount, unitPrice)->
     return amount  if order.action is "buy"
     unitPrice = MarketHelper.convertFromBigint unitPrice
-    math.multiply(amount, unitPrice)
+    math.round math.multiply(amount, unitPrice)
 
   calculateFee: (amount)->
     math.round math.select(amount).divide(100).multiply(MarketHelper.getTradeFee()).done(), 0
