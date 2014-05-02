@@ -23,26 +23,26 @@ describe "OrderBook", ->
       ]
       matchingResult = [
         [
-          {id: 1, order_id: 5, matched_amount: 200000000, result_amount: 199600000, fee: 400000, unit_price: MarketHelper.convertToBigint(0.3), status: "partiallyCompleted"}
-          {id: 2, order_id: 8, matched_amount: 200000000, result_amount: 59880000, fee: 120000, unit_price: MarketHelper.convertToBigint(0.3), status: "completed"}
+          {id: 1, order_id: 5, matched_amount: 200000000, result_amount: 200000000, fee: 0, unit_price: MarketHelper.convertToBigint(0.3), status: "partiallyCompleted"}
+          {id: 2, order_id: 8, matched_amount: 200000000, result_amount: 60000000, fee: 0, unit_price: MarketHelper.convertToBigint(0.3), status: "completed"}
         ]
         [
-          {id: 1, order_id: 5, matched_amount: 300000000, result_amount: 299400000, fee: 600000, unit_price: MarketHelper.convertToBigint(0.3), status: "partiallyCompleted"}
-          {id: 3, order_id: 10, matched_amount: 300000000, result_amount: 89820000, fee: 180000, unit_price: MarketHelper.convertToBigint(0.3), status: "completed"}
+          {id: 1, order_id: 5, matched_amount: 300000000, result_amount: 300000000, fee: 0, unit_price: MarketHelper.convertToBigint(0.3), status: "partiallyCompleted"}
+          {id: 3, order_id: 10, matched_amount: 300000000, result_amount: 90000000, fee: 0, unit_price: MarketHelper.convertToBigint(0.3), status: "completed"}
         ]
         [
-          {id: 1, order_id: 5, matched_amount: 400000000, result_amount: 399200000, fee: 800000, unit_price: MarketHelper.convertToBigint(0.3), status: "partiallyCompleted"}
-          {id: 4, order_id: 12, matched_amount: 400000000, result_amount: 119760000, fee: 240000, unit_price: MarketHelper.convertToBigint(0.3), status: "completed"}
+          {id: 1, order_id: 5, matched_amount: 400000000, result_amount: 400000000, fee: 0, unit_price: MarketHelper.convertToBigint(0.3), status: "partiallyCompleted"}
+          {id: 4, order_id: 12, matched_amount: 400000000, result_amount: 120000000, fee: 0, unit_price: MarketHelper.convertToBigint(0.3), status: "completed"}
         ]
         [
-          {id: 1, order_id: 5, matched_amount: 100000000, result_amount: 99800000, fee: 200000, unit_price: MarketHelper.convertToBigint(0.3), status: "completed"}
-          {id: 6, order_id: 14, matched_amount: 100000000, result_amount: 29940000, fee: 60000, unit_price: MarketHelper.convertToBigint(0.3), status: "partiallyCompleted"}
+          {id: 1, order_id: 5, matched_amount: 100000000, result_amount: 100000000, fee: 0, unit_price: MarketHelper.convertToBigint(0.3), status: "completed"}
+          {id: 6, order_id: 14, matched_amount: 100000000, result_amount: 30000000, fee: 0, unit_price: MarketHelper.convertToBigint(0.3), status: "partiallyCompleted"}
         ]
       ]
       matchingResult2 = [
         [
-          {id: 5, order_id: 13, matched_amount: 400000000, result_amount: 399200000, fee: 800000, unit_price: MarketHelper.convertToBigint(0.2), status: "partiallyCompleted"}
-          {id: 6, order_id: 14, matched_amount: 400000000, result_amount: 79840000, fee: 160000, unit_price: MarketHelper.convertToBigint(0.2), status: "completed"}
+          {id: 5, order_id: 13, matched_amount: 400000000, result_amount: 400000000, fee: 0, unit_price: MarketHelper.convertToBigint(0.2), status: "partiallyCompleted"}
+          {id: 6, order_id: 14, matched_amount: 400000000, result_amount: 80000000, fee: 0, unit_price: MarketHelper.convertToBigint(0.2), status: "completed"}
         ]
       ]
 
@@ -78,17 +78,17 @@ describe "OrderBook", ->
         OrderBook.matchBuyOrders (err, affectedOrderIds)->
           GLOBAL.db.BuyOrder.find(1).success (order)->
             order.matched_amount.should.eql 1000000000
-            order.result_amount.should.eql 998000000
-            order.fee.should.eql 2000000
+            order.result_amount.should.eql 1000000000
+            order.fee.should.eql 0
             done()
 
       it "sets the matched orders amounts", (done)->
         OrderBook.matchBuyOrders (err, affectedOrderIds)->
           GLOBAL.db.SellOrder.findAll({where: {id: [2, 3, 4]}}).success (orders)->
             expectedData =
-              2: {matched_amount: 200000000, result_amount: 59880000, fee: 120000}
-              3: {matched_amount: 300000000, result_amount: 89820000, fee: 180000}
-              4: {matched_amount: 400000000, result_amount: 119760000, fee: 240000}
+              2: {matched_amount: 200000000, result_amount: 60000000, fee: 0}
+              3: {matched_amount: 300000000, result_amount: 90000000, fee: 0}
+              4: {matched_amount: 400000000, result_amount: 120000000, fee: 0}
             for order in orders
               order.matched_amount.should.eql expectedData[order.id].matched_amount
               order.result_amount.should.eql expectedData[order.id].result_amount
@@ -168,8 +168,8 @@ describe "OrderBook", ->
 
     describe "when the matching order has a lower creation date", ()->
       matchingResult = [
-        {id: 1, order_id: 5, matched_amount: 900000000, result_amount: 898200000, fee: 1800000, unit_price: 10000000, status: "completed"}
-        {id: 2, order_id: 8, matched_amount: 900000000, result_amount: 89820000, fee: 180000, unit_price: 10000000, status: "completed"}
+        {id: 1, order_id: 5, matched_amount: 900000000, result_amount: 900000000, fee: 0, unit_price: 10000000, status: "completed"}
+        {id: 2, order_id: 8, matched_amount: 900000000, result_amount: 90000000, fee: 0, unit_price: 10000000, status: "completed"}
       ]
 
       beforeEach ()->
@@ -184,8 +184,8 @@ describe "OrderBook", ->
 
     describe "when the matching order has a higher creation date", ()->
       matchingResult = [
-        {id: 1, order_id: 5, matched_amount: 900000000, result_amount: 898200000, fee: 1800000, unit_price: 20000000, status: "completed"}
-        {id: 2, order_id: 8, matched_amount: 900000000, result_amount: 179640000, fee: 360000, unit_price: 20000000, status: "completed"}
+        {id: 1, order_id: 5, matched_amount: 900000000, result_amount: 900000000, fee: 0, unit_price: 20000000, status: "completed"}
+        {id: 2, order_id: 8, matched_amount: 900000000, result_amount: 180000000, fee: 0, unit_price: 20000000, status: "completed"}
       ]
 
       beforeEach ()->
@@ -213,4 +213,4 @@ describe "OrderBook", ->
   describe "calculateFee", ()->
     describe "when the fee is lower than 8 decimals", ()->
       it "rounds the result", ()->
-        OrderBook.calculateFee(155200).should.eql 310
+        OrderBook.calculateFee(155200).should.eql 0
