@@ -1,3 +1,6 @@
+// Configure logger
+if (process.env.NODE_ENV === "production") require("./configs/logger");
+
 var fs = require('fs');
 var environment = process.env.NODE_ENV || 'development';
 var config = JSON.parse(fs.readFileSync(process.cwd() + '/config.json', encoding='utf8'))[environment];
@@ -14,4 +17,4 @@ var processEvents = function () {
 
 processEvents();
 
-console.log(new Date() + " - processing events...");
+console.log("processing events...");
