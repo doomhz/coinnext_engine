@@ -78,13 +78,14 @@ OrderBook =
 
   matchTwoOrders: (orderToMatch, matchingOrder)->
     amountToMatch = if matchingOrder.left_amount > orderToMatch.left_amount then orderToMatch.left_amount else matchingOrder.left_amount
-    unitPrice = if matchingOrder.created_at < orderToMatch.created_at then matchingOrder.unit_price else orderToMatch.unit_price
+    unitPrice = if matchingOrder.created_at.getTime() < orderToMatch.created_at.getTime() then matchingOrder.unit_price else orderToMatch.unit_price
+    activeOrderId = if matchingOrder.created_at.getTime() > orderToMatch.created_at.getTime() then matchingOrder.id else orderToMatch.id
     matchResult = []
-    matchResult.push @matchOrderAmount orderToMatch, amountToMatch, unitPrice
-    matchResult.push @matchOrderAmount matchingOrder, amountToMatch, unitPrice
+    matchResult.push @matchOrderAmount orderToMatch, amountToMatch, unitPrice, activeOrderId
+    matchResult.push @matchOrderAmount matchingOrder, amountToMatch, unitPrice, activeOrderId
     matchResult
 
-  matchOrderAmount: (order, amount, unitPrice)->
+  matchOrderAmount: (order, amount, unitPrice, activeOrderId)->
     resultAmount = @calculateResultAmount order, amount, unitPrice
     fee = @calculateFee resultAmount
     resultAmount = math.add resultAmount, -fee
@@ -92,6 +93,7 @@ OrderBook =
     @addResultAmount order, resultAmount
     @addFee order, fee
     @adjustStatusByAmounts order
+    isActive = activeOrderId is order.id
     result =
       id: order.id
       order_id: order.external_order_id
@@ -100,6 +102,8 @@ OrderBook =
       fee: fee
       unit_price: unitPrice
       status: order.status
+      time: Date.now()
+      active: isActive
 
   calculateResultAmount: (order, amount, unitPrice)->
     return amount  if order.action is "buy"

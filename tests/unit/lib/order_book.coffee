@@ -57,9 +57,9 @@ describe "OrderBook", ->
           result[0].length.should.eql 4
           result[1].length.should.eql 1
           for res, index in result[0]
-            res.should.eql matchingResult[index]
+            res.should.containDeep matchingResult[index]
           for res, index in result[1]
-            res.should.eql matchingResult2[index]
+            res.should.containDeep matchingResult2[index]
           done()
 
       it "sets the big order as completed", (done)->
@@ -100,9 +100,9 @@ describe "OrderBook", ->
           GLOBAL.db.Event.findAll().complete (err, events)->
             for event, index in events
               if index < 4
-                event.loadout.should.eql matchingResult[index]
+                event.loadout.should.containDeep matchingResult[index]
               else
-                event.loadout.should.eql matchingResult2[index - 4]
+                event.loadout.should.containDeep matchingResult2[index - 4]
             done()
 
 
@@ -180,7 +180,20 @@ describe "OrderBook", ->
 
       it "matches the orders at the matching order unit price", ()->
         result = OrderBook.matchTwoOrders buyOrder, sellOrder
-        result.should.eql matchingResult
+        result.should.containDeep matchingResult
+
+      it "sets the order with the higher creation date as active", ()->
+        result = OrderBook.matchTwoOrders buyOrder, sellOrder
+        result[0].active.should.eql true
+
+      it "sets the order with the higher creation date as non active", ()->
+        result = OrderBook.matchTwoOrders buyOrder, sellOrder
+        result[1].active.should.eql false
+
+      it "sets the matching time", ()->
+        result = OrderBook.matchTwoOrders buyOrder, sellOrder
+        result[0].should.have.property "time"
+        result[1].should.have.property "time"
 
     describe "when the matching order has a higher creation date", ()->
       matchingResult = [
@@ -196,7 +209,20 @@ describe "OrderBook", ->
 
       it "matches the orders at the matching order unit price", ()->
         result = OrderBook.matchTwoOrders buyOrder, sellOrder
-        result.should.eql matchingResult
+        result.should.containDeep matchingResult
+
+      it "sets the order with the higher creation date as active", ()->
+        result = OrderBook.matchTwoOrders buyOrder, sellOrder
+        result[1].active.should.eql true
+
+      it "sets the order with the higher creation date as non active", ()->
+        result = OrderBook.matchTwoOrders buyOrder, sellOrder
+        result[0].active.should.eql false
+
+      it "sets the matching time", ()->
+        result = OrderBook.matchTwoOrders buyOrder, sellOrder
+        result[0].should.have.property "time"
+        result[1].should.have.property "time"
 
 
   describe "calculateResultAmount", ()->
