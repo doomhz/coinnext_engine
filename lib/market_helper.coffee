@@ -5,30 +5,15 @@ math = require("mathjs")
 
 FEE = 0
 
-#CURRENCIES = [
-#  "BTC", "LTC", "PPC", "WDC", "NMC", "QRK",
-#  "NVC", "ZET", "FTC", "XPM", "MEC", "TRC"
-#]
-
 CURRENCIES =
   BTC: 1
   LTC: 2
   PPC: 3
   DOGE: 4
   NMC: 5
-
-CURRENCY_NAMES =
-  BTC: "Bitcoin"
-  LTC: "Litecoin"
-  PPC: "Peercoin"
-  DOGE: "Dogecoin"
-  NMC: "Namecoin"
-
-AVAILABLE_MARKETS =
-  LTC_BTC: 1
-  PPC_BTC: 2
-  DOGE_BTC: 3
-  NMC_BTC: 4
+  DRK: 6
+  XPM: 7
+  BC: 8
 
 ORDER_TYPES =
   market: 1
@@ -43,10 +28,6 @@ ORDER_STATUS =
   partiallyCompleted: 2
   completed: 3
 
-MARKET_STATUS =
-  enabled: 1
-  disabled: 2
-
 EVENT_TYPE =
   orders_match: 1
   order_canceled: 2
@@ -56,23 +37,6 @@ EVENT_STATUS =
   sent: 2
 
 MarketHelper =
-
-  getMarkets: ()->
-    AVAILABLE_MARKETS
-
-  getMarket: (type)->
-    AVAILABLE_MARKETS[type]
-
-  getMarketTypes: ()->
-    Object.keys AVAILABLE_MARKETS
-
-  getMarketLiteral: (intType)->
-    _.invert(AVAILABLE_MARKETS)[intType]
-
-  isValidMarket: (action, buyCurrency, sellCurrency)->
-    market = "#{buyCurrency}_#{sellCurrency}"  if action is "buy"
-    market = "#{sellCurrency}_#{buyCurrency}"  if action is "sell"
-    !!AVAILABLE_MARKETS[market]
 
   getOrderStatus: (status)->
     ORDER_STATUS[status]
@@ -104,12 +68,6 @@ MarketHelper =
   getCurrencyLiteral: (intCurrency)->
     _.invert(CURRENCIES)[intCurrency]
 
-  getCurrencyNames: ()->
-    CURRENCY_NAMES
-
-  getCurrencyName: (currency)->
-    CURRENCY_NAMES[currency]
-
   isValidCurrency: (currency)->
     !!CURRENCIES[currency]
 
@@ -118,12 +76,6 @@ MarketHelper =
 
   convertFromBigint: (value)->
     math.divide value, 100000000
-
-  getMarketStatus: (status)->
-    MARKET_STATUS[status]
-
-  getMarketStatusLiteral: (intStatus)->
-    _.invert(MARKET_STATUS)[intStatus]
 
   getEventType: (type)->
     EVENT_TYPE[type]
