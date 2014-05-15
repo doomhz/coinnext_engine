@@ -14,6 +14,7 @@ CURRENCIES =
   DRK: 6
   XPM: 7
   BC: 8
+  VTC: 9
 
 ORDER_TYPES =
   market: 1
