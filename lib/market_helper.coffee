@@ -15,6 +15,7 @@ CURRENCIES =
   XPM: 7
   BC: 8
   VTC: 9
+  METH: 10
 
 ORDER_TYPES =
   market: 1
