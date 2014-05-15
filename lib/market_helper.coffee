@@ -16,6 +16,7 @@ CURRENCIES =
   BC: 8
   VTC: 9
   METH: 10
+  NLG: 11
 
 ORDER_TYPES =
   market: 1
