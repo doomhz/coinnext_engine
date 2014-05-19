@@ -18,6 +18,7 @@ CURRENCIES =
   METH: 10
   NLG: 11
   TCO: 12
+  CX: 13
 
 ORDER_TYPES =
   market: 1
