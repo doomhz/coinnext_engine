@@ -19,6 +19,7 @@ CURRENCIES =
   NLG: 11
   TCO: 12
   CX: 13
+  BANK: 14
 
 ORDER_TYPES =
   market: 1
