@@ -17,6 +17,7 @@ CURRENCIES =
   VTC: 9
   METH: 10
   NLG: 11
+  TCO: 12
 
 ORDER_TYPES =
   market: 1
