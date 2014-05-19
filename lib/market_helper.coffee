@@ -20,6 +20,7 @@ CURRENCIES =
   TCO: 12
   CX: 13
   BANK: 14
+  BRM: 15
 
 ORDER_TYPES =
   market: 1
