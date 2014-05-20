@@ -23,6 +23,9 @@ CURRENCIES =
   BRM: 15
   GAY: 16
   MAX: 17
+  ACC: 18
+  VIO: 19
+  VRC: 20
 
 ORDER_TYPES =
   market: 1
