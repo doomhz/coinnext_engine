@@ -21,6 +21,7 @@ CURRENCIES =
   CX: 13
   BANK: 14
   BRM: 15
+  GAY: 16
 
 ORDER_TYPES =
   market: 1
