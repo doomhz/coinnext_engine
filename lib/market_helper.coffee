@@ -22,6 +22,7 @@ CURRENCIES =
   BANK: 14
   BRM: 15
   GAY: 16
+  MAX: 17
 
 ORDER_TYPES =
   market: 1
