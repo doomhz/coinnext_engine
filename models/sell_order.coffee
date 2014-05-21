@@ -21,17 +21,9 @@ module.exports = (sequelize, DataTypes) ->
       buy_currency:
         type: DataTypes.INTEGER.UNSIGNED
         allowNull: false
-        get: ()->
-          MarketHelper.getCurrencyLiteral @getDataValue("buy_currency")
-        set: (buyCurrency)->
-          @setDataValue "buy_currency", MarketHelper.getCurrency(buyCurrency)
       sell_currency:
         type: DataTypes.INTEGER.UNSIGNED
         allowNull: false
-        get: ()->
-          MarketHelper.getCurrencyLiteral @getDataValue("sell_currency")
-        set: (sellCurrency)->
-          @setDataValue "sell_currency", MarketHelper.getCurrency(sellCurrency)
       amount:
         type: DataTypes.BIGINT.UNSIGNED
         defaultValue: 0

@@ -29,23 +29,11 @@
       },
       buy_currency: {
         type: DataTypes.INTEGER.UNSIGNED,
-        allowNull: false,
-        get: function() {
-          return MarketHelper.getCurrencyLiteral(this.getDataValue("buy_currency"));
-        },
-        set: function(buyCurrency) {
-          return this.setDataValue("buy_currency", MarketHelper.getCurrency(buyCurrency));
-        }
+        allowNull: false
       },
       sell_currency: {
         type: DataTypes.INTEGER.UNSIGNED,
-        allowNull: false,
-        get: function() {
-          return MarketHelper.getCurrencyLiteral(this.getDataValue("sell_currency"));
-        },
-        set: function(sellCurrency) {
-          return this.setDataValue("sell_currency", MarketHelper.getCurrency(sellCurrency));
-        }
+        allowNull: false
       },
       amount: {
         type: DataTypes.BIGINT.UNSIGNED,

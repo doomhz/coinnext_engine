@@ -4,6 +4,9 @@ OrderBook = require "./../../../lib/order_book"
 
 describe "OrderBook", ->
 
+  BTC = 1
+  LTC = 2
+
   beforeEach (done)->
     GLOBAL.db.sequelize.sync({force: true}).complete ()->
       done()
@@ -12,14 +15,14 @@ describe "OrderBook", ->
     describe "when there is a big buy order and a couple of small orders to match", ()->
       now = Date.now()
       buyOrdersData = [
-        {id: 1, external_order_id: 5, type: "limit", buy_currency: "LTC", sell_currency: "BTC", amount: MarketHelper.convertToBigint(10), unit_price: MarketHelper.convertToBigint(0.3), status: "open", created_at: now - 5000}
-        {id: 5, external_order_id: 13, type: "limit", action: "buy", buy_currency: "LTC", sell_currency: "BTC", amount: MarketHelper.convertToBigint(5), unit_price: MarketHelper.convertToBigint(0.2), status: "open", created_at: now - 1500}
+        {id: 1, external_order_id: 5, type: "limit", buy_currency: LTC, sell_currency: BTC, amount: MarketHelper.convertToBigint(10), unit_price: MarketHelper.convertToBigint(0.3), status: "open", created_at: now - 5000}
+        {id: 5, external_order_id: 13, type: "limit", action: "buy", buy_currency: LTC, sell_currency: BTC, amount: MarketHelper.convertToBigint(5), unit_price: MarketHelper.convertToBigint(0.2), status: "open", created_at: now - 1500}
       ]
       sellOrdersData = [
-        {id: 2, external_order_id: 8, type: "limit", buy_currency: "BTC", sell_currency: "LTC", amount: MarketHelper.convertToBigint(2), unit_price: MarketHelper.convertToBigint(0.1), status: "open", created_at: now - 4000}
-        {id: 3, external_order_id: 10, type: "limit", buy_currency: "BTC", sell_currency: "LTC", amount: MarketHelper.convertToBigint(3), unit_price: MarketHelper.convertToBigint(0.1), status: "open", created_at: now - 3000}
-        {id: 4, external_order_id: 12, type: "limit", buy_currency: "BTC", sell_currency: "LTC", amount: MarketHelper.convertToBigint(4), unit_price: MarketHelper.convertToBigint(0.1), status: "open", created_at: now - 2000}
-        {id: 6, external_order_id: 14, type: "limit", buy_currency: "BTC", sell_currency: "LTC", amount: MarketHelper.convertToBigint(5), unit_price: MarketHelper.convertToBigint(0.2), status: "open", created_at: now - 1000}
+        {id: 2, external_order_id: 8, type: "limit", buy_currency: BTC, sell_currency: LTC, amount: MarketHelper.convertToBigint(2), unit_price: MarketHelper.convertToBigint(0.1), status: "open", created_at: now - 4000}
+        {id: 3, external_order_id: 10, type: "limit", buy_currency: BTC, sell_currency: LTC, amount: MarketHelper.convertToBigint(3), unit_price: MarketHelper.convertToBigint(0.1), status: "open", created_at: now - 3000}
+        {id: 4, external_order_id: 12, type: "limit", buy_currency: BTC, sell_currency: LTC, amount: MarketHelper.convertToBigint(4), unit_price: MarketHelper.convertToBigint(0.1), status: "open", created_at: now - 2000}
+        {id: 6, external_order_id: 14, type: "limit", buy_currency: BTC, sell_currency: LTC, amount: MarketHelper.convertToBigint(5), unit_price: MarketHelper.convertToBigint(0.2), status: "open", created_at: now - 1000}
       ]
       matchingResult = [
         [
@@ -109,11 +112,11 @@ describe "OrderBook", ->
     describe "when there are multiple orders to match", ()->
       now = Date.now()
       buyOrdersData = [
-        {id: 1, external_order_id: 5, type: "limit", buy_currency: "LTC", sell_currency: "BTC", amount: MarketHelper.convertToBigint(10), unit_price: MarketHelper.convertToBigint(0.1), status: "open", created_at: now - 7000}
-        {id: 2, external_order_id: 6, type: "limit", buy_currency: "LTC", sell_currency: "BTC", amount: MarketHelper.convertToBigint(10), unit_price: MarketHelper.convertToBigint(0.2), status: "open", created_at: now - 5000}
+        {id: 1, external_order_id: 5, type: "limit", buy_currency: LTC, sell_currency: BTC, amount: MarketHelper.convertToBigint(10), unit_price: MarketHelper.convertToBigint(0.1), status: "open", created_at: now - 7000}
+        {id: 2, external_order_id: 6, type: "limit", buy_currency: LTC, sell_currency: BTC, amount: MarketHelper.convertToBigint(10), unit_price: MarketHelper.convertToBigint(0.2), status: "open", created_at: now - 5000}
       ]
       sellOrdersData = [
-        {id: 2, external_order_id: 8, type: "limit", buy_currency: "BTC", sell_currency: "LTC", amount: MarketHelper.convertToBigint(10), unit_price: MarketHelper.convertToBigint(0.1), status: "open", created_at: now - 4000}        
+        {id: 2, external_order_id: 8, type: "limit", buy_currency: BTC, sell_currency: LTC, amount: MarketHelper.convertToBigint(10), unit_price: MarketHelper.convertToBigint(0.1), status: "open", created_at: now - 4000}        
       ]
 
       beforeEach (done)->
@@ -135,12 +138,12 @@ describe "OrderBook", ->
     describe "when there are multiple mathcing orders", ()->
       now = Date.now()
       buyOrdersData = [
-        {id: 1, external_order_id: 5, type: "limit", buy_currency: "LTC", sell_currency: "BTC", amount: MarketHelper.convertToBigint(10), unit_price: MarketHelper.convertToBigint(0.2), status: "open", created_at: now - 5000}
+        {id: 1, external_order_id: 5, type: "limit", buy_currency: LTC, sell_currency: BTC, amount: MarketHelper.convertToBigint(10), unit_price: MarketHelper.convertToBigint(0.2), status: "open", created_at: now - 5000}
       ]
       sellOrdersData = [
-        {id: 2, external_order_id: 8, type: "limit", buy_currency: "BTC", sell_currency: "LTC", amount: MarketHelper.convertToBigint(9), unit_price: MarketHelper.convertToBigint(0.1), status: "open", created_at: now - 4000}
-        {id: 3, external_order_id: 10, type: "limit", buy_currency: "BTC", sell_currency: "LTC", amount: MarketHelper.convertToBigint(3), unit_price: MarketHelper.convertToBigint(0.15), status: "open", created_at: now - 5000}
-        {id: 4, external_order_id: 11, type: "limit", buy_currency: "BTC", sell_currency: "LTC", amount: MarketHelper.convertToBigint(3), unit_price: MarketHelper.convertToBigint(0.15), status: "open", created_at: now - 6000}
+        {id: 2, external_order_id: 8, type: "limit", buy_currency: BTC, sell_currency: LTC, amount: MarketHelper.convertToBigint(9), unit_price: MarketHelper.convertToBigint(0.1), status: "open", created_at: now - 4000}
+        {id: 3, external_order_id: 10, type: "limit", buy_currency: BTC, sell_currency: LTC, amount: MarketHelper.convertToBigint(3), unit_price: MarketHelper.convertToBigint(0.15), status: "open", created_at: now - 5000}
+        {id: 4, external_order_id: 11, type: "limit", buy_currency: BTC, sell_currency: LTC, amount: MarketHelper.convertToBigint(3), unit_price: MarketHelper.convertToBigint(0.15), status: "open", created_at: now - 6000}
       ]
 
       beforeEach (done)->
@@ -163,8 +166,8 @@ describe "OrderBook", ->
     now = Date.now()
     buyOrder = null
     sellOrder = null
-    buyOrderData = {id: 1, external_order_id: 5, type: "limit", buy_currency: "LTC", sell_currency: "BTC", amount: MarketHelper.convertToBigint(9), unit_price: MarketHelper.convertToBigint(0.2), status: "open"}
-    sellOrderData = {id: 2, external_order_id: 8, type: "limit", buy_currency: "BTC", sell_currency: "LTC", amount: MarketHelper.convertToBigint(9), unit_price: MarketHelper.convertToBigint(0.1), status: "open"}
+    buyOrderData = {id: 1, external_order_id: 5, type: "limit", buy_currency: LTC, sell_currency: BTC, amount: MarketHelper.convertToBigint(9), unit_price: MarketHelper.convertToBigint(0.2), status: "open"}
+    sellOrderData = {id: 2, external_order_id: 8, type: "limit", buy_currency: BTC, sell_currency: LTC, amount: MarketHelper.convertToBigint(9), unit_price: MarketHelper.convertToBigint(0.1), status: "open"}
 
     describe "when the matching order has a lower creation date", ()->
       matchingResult = [

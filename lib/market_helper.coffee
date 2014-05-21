@@ -5,28 +5,6 @@ math = require("mathjs")
 
 FEE = 0
 
-CURRENCIES =
-  BTC: 1
-  LTC: 2
-  PPC: 3
-  DOGE: 4
-  NMC: 5
-  DRK: 6
-  XPM: 7
-  BC: 8
-  VTC: 9
-  METH: 10
-  NLG: 11
-  TCO: 12
-  CX: 13
-  BANK: 14
-  BRM: 15
-  GAY: 16
-  MAX: 17
-  ACC: 18
-  VIO: 19
-  VRC: 20
-
 ORDER_TYPES =
   market: 1
   limit: 2
@@ -67,18 +45,6 @@ MarketHelper =
 
   getOrderTypeLiteral: (intType)->
     _.invert(ORDER_TYPES)[intType]
-
-  getCurrencies: (currency)->
-    CURRENCIES
-
-  getCurrencyTypes: ()->
-    Object.keys CURRENCIES
-
-  getCurrency: (currency)->
-    CURRENCIES[currency]
-
-  getCurrencyLiteral: (intCurrency)->
-    _.invert(CURRENCIES)[intCurrency]
 
   isValidCurrency: (currency)->
     !!CURRENCIES[currency]

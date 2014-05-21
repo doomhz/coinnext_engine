@@ -5,6 +5,9 @@ request = require "supertest"
 
 describe "Orders API", ->
 
+  BTC = 1
+  LTC = 2
+
   beforeEach (done)->
     GLOBAL.db.sequelize.sync({force: true}).complete ()->
       done()
@@ -14,8 +17,8 @@ describe "Orders API", ->
       orderData =
         type: "limit"
         action: "buy"
-        buy_currency: "LTC"
-        sell_currency: "BTC"
+        buy_currency: LTC
+        sell_currency: BTC
         amount: 1000000000
         unit_price: 10000000
       
@@ -35,8 +38,8 @@ describe "Orders API", ->
             order.external_order_id.should.eql 1
             order.type.should.eql "limit"
             order.action.should.eql "buy"
-            order.buy_currency.should.eql "LTC"
-            order.sell_currency.should.eql "BTC"
+            order.buy_currency.should.eql LTC
+            order.sell_currency.should.eql BTC
             order.amount.should.eql 1000000000
             order.unit_price.should.eql 10000000
             done()
@@ -56,8 +59,8 @@ describe "Orders API", ->
         external_order_id: 1
         type: "limit"
         action: "buy"
-        buy_currency: "LTC"
-        sell_currency: "BTC"
+        buy_currency: LTC
+        sell_currency: BTC
         amount: 1000000000
         unit_price: 10000000
         status: "open"
@@ -88,8 +91,8 @@ describe "Orders API", ->
         external_order_id: 1
         type: "limit"
         action: "buy"
-        buy_currency: "LTC"
-        sell_currency: "BTC"
+        buy_currency: LTC
+        sell_currency: BTC
         amount: 1000000000
         unit_price: 10000000
         status: "partiallyCompleted"
@@ -120,8 +123,8 @@ describe "Orders API", ->
         external_order_id: 1
         type: "limit"
         action: "buy"
-        buy_currency: "LTC"
-        sell_currency: "BTC"
+        buy_currency: LTC
+        sell_currency: BTC
         amount: 1000000000
         unit_price: 10000000
         status: "completed"

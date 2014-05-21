@@ -23,8 +23,8 @@ OrderBook =
   findMatchingSellOrders: (buyOrderToMatch, transaction, callback = ()->)->
     matchingOrdersQuery =
       where:
-        buy_currency: MarketHelper.getCurrency buyOrderToMatch.sell_currency
-        sell_currency: MarketHelper.getCurrency buyOrderToMatch.buy_currency
+        buy_currency: buyOrderToMatch.sell_currency
+        sell_currency: buyOrderToMatch.buy_currency
         unit_price:
           lte: buyOrderToMatch.unit_price
         status:
