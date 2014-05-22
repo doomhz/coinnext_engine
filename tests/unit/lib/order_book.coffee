@@ -99,14 +99,15 @@ describe "OrderBook", ->
             done()
 
       it "adds a matching event about the last match", (done)->
-        OrderBook.matchBuyOrders (err, result)->
-          GLOBAL.db.Event.findAll().complete (err, events)->
-            for event, index in events
-              if index < 4
-                event.loadout.should.containDeep matchingResult[index]
-              else
-                event.loadout.should.containDeep matchingResult2[index - 4]
-            done()
+        GLOBAL.queue.sequelize.sync({force: true}).complete ()->
+          OrderBook.matchBuyOrders (err, result)->
+            GLOBAL.queue.Event.findAll().complete (err, events)->
+              for event, index in events
+                if index < 4
+                  event.loadout.should.containDeep matchingResult[index]
+                else
+                  event.loadout.should.containDeep matchingResult2[index - 4]
+              done()
 
 
     describe "when there are multiple orders to match", ()->

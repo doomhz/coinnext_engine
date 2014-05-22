@@ -3,7 +3,7 @@ path = require("path")
 Sequelize = require("sequelize")
 lodash = require("lodash")
 
-authData = GLOBAL.appConfig().mysql
+authData = GLOBAL.appConfig().queue
 sequelize = new Sequelize authData.db, authData.user, authData.password,
   port: authData.port
   host: authData.host

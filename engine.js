@@ -8,6 +8,7 @@ var config = JSON.parse(fs.readFileSync(process.cwd() + '/config.json', encoding
 // Configure globals
 GLOBAL.appConfig = function () {return config;};
 GLOBAL.db = require('./models/index');
+GLOBAL.queue = require('./lib/queue/index');
 var OrderBook = require("./lib/order_book")
 
 var processOrders = function () {

@@ -1,8 +1,5 @@
 module.exports =
   up: (migration, DataTypes, done) ->
-    migration.addIndex "events", ["status"]
-    migration.addIndex "events", ["created_at"]
-
     migration.addIndex "buy_orders", ["status"]
     migration.addIndex "buy_orders", ["buy_currency"]
     migration.addIndex "buy_orders", ["sell_currency"]
@@ -19,9 +16,6 @@ module.exports =
     return
 
   down: (migration, DataTypes, done) ->
-    migration.removeIndex "events", ["status"]
-    migration.removeIndex "events", ["created_at"]
-
     migration.removeIndex "buy_orders", ["status"]
     migration.removeIndex "buy_orders", ["buy_currency"]
     migration.removeIndex "buy_orders", ["sell_currency"]
