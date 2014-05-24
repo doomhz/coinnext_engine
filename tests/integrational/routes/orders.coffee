@@ -52,7 +52,7 @@ describe "Orders API", ->
         .expect(409)
         .end done
 
-
+  ###
   describe "DELETE /order/:order_id", ()->
     describe "when there is an open order with the same external id", ()->
       orderData =
@@ -147,4 +147,4 @@ describe "Orders API", ->
         .send()
         .expect(409)
         .end done
-
+  ###

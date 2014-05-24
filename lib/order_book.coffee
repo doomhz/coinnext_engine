@@ -62,7 +62,7 @@ OrderBook =
           order.save({transaction: transaction}).complete cb
         async.mapSeries matchingSellOrders.concat(buyOrderToMatch), updateOrderCallback, (err, result)->
           return callback "Could not match order #{buyOrderToMatch.id} - #{JSON.stringify(err)}"  if err
-          GLOBAL.queue.Event.addMatchOrders matchResults, transaction, (err)->
+          GLOBAL.queue.Event.addMatchOrders matchResults, (err)->
             return callback "Could not add event for matching order #{buyOrderToMatch.id} - #{JSON.stringify(err)}"  if err
             callback null, matchResults
 

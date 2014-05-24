@@ -20,7 +20,8 @@ ORDER_STATUS =
 
 EVENT_TYPE =
   orders_match: 1
-  order_canceled: 2
+  cancel_order: 2
+  order_canceled: 3
 
 EVENT_STATUS =
   unsent: 1

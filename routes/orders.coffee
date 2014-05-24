@@ -17,11 +17,3 @@ module.exports = (app)->
     OrderBook.addOrder orderData, (err, order)->
       return next(new restify.ConflictError err)  if err
       res.send order
-
-  app.del "/order/:order_id", (req, res, next)->
-    orderId = req.params.order_id
-    #console.log orderId
-    OrderBook.deleteOpenOrder orderId, (err)->
-      return next(new restify.ConflictError err)  if err
-      res.send
-        order_id: orderId

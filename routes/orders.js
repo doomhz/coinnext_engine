@@ -6,7 +6,7 @@
   OrderBook = require("./../lib/order_book");
 
   module.exports = function(app) {
-    app.post("/order/:order_id", function(req, res, next) {
+    return app.post("/order/:order_id", function(req, res, next) {
       var orderData, orderId;
       orderId = req.params.order_id;
       orderData = {
@@ -23,18 +23,6 @@
           return next(new restify.ConflictError(err));
         }
         return res.send(order);
-      });
-    });
-    return app.del("/order/:order_id", function(req, res, next) {
-      var orderId;
-      orderId = req.params.order_id;
-      return OrderBook.deleteOpenOrder(orderId, function(err) {
-        if (err) {
-          return next(new restify.ConflictError(err));
-        }
-        return res.send({
-          order_id: orderId
-        });
       });
     });
   };
