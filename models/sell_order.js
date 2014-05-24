@@ -86,6 +86,7 @@
       }
     }, {
       tableName: "sell_orders",
+      paranoid: true,
       getterMethods: {
         left_amount: function() {
           return math.add(this.amount, -this.matched_amount);

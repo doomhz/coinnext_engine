@@ -62,6 +62,7 @@ module.exports = (sequelize, DataTypes) ->
           @setDataValue "status", MarketHelper.getOrderStatus(status)
     ,
       tableName: "buy_orders"
+      paranoid: true
       getterMethods:
 
         left_amount: ()->
