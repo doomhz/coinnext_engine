@@ -138,10 +138,10 @@ OrderBook =
       external_order_id: externalId
       status:
         ne: MarketHelper.getOrderStatus "completed"
-    BuyOrder.destroy(query).complete (err, buyRows)->
-      return callback err, buyRows  if err or buyRows
-      SellOrder.destroy(query).complete (err, sellRows)->
-        return callback err, sellRows  if err or sellRows
-        callback "Could not delete order #{externalId}. Might be already completed."
+    BuyOrder.destroy(query).complete (err)->
+      return callback err  if err
+      SellOrder.destroy(query).complete (err)->
+        return callback err  if err
+        callback()
 
 exports = module.exports = OrderBook
