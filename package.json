@@ -7,14 +7,12 @@
     "test": "make test"
   },
   "dependencies": {
-    "restify": "2.7.0"
-    , "coffee-script": "latest"
+    "coffee-script": "latest"
     , "underscore": "1.6.0"
     , "underscore.string": "2.3.3"
     , "date-utils": "1.2.15"
     , "winston": "0.7.3"
     , "async": "0.8.0"
-    , "request": "2.34.0"
     , "mysql": "2.2.0"
     , "sequelize": "1.7.1"
     , "lodash": "2.4.1"

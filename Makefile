@@ -3,14 +3,7 @@ REPORTER = nyan
 INTEGRATIONAL_TESTS = $(shell find tests/integrational -name "*.coffee")
 UNIT_TESTS = $(shell find tests/unit -name "*.coffee")
 
-test: test-integrational test-unit
-
-test-integrational:
-	@NODE_ENV=test ./node_modules/.bin/mocha -u bdd \
-		--reporter $(REPORTER) \
-		--compilers coffee:coffee-script/register \
-		--timeout 10000 \
-		$(INTEGRATIONAL_TESTS)
+test: test-unit
 
 test-unit:
 	@NODE_ENV=test ./node_modules/.bin/mocha -u bdd \

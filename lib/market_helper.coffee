@@ -22,6 +22,8 @@ EVENT_TYPE =
   orders_match: 1
   cancel_order: 2
   order_canceled: 3
+  add_order: 4
+  order_added: 5
 
 EVENT_STATUS =
   unsent: 1
