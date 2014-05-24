@@ -28,7 +28,7 @@ var processNextCancellation = function (callback) {
     var orderId = event.loadout.order_id;
     OrderBook.deleteOpenOrder(orderId, function (err) {
       if (!err) {
-        event.status = "sent";
+        event.status = "processed";
         event.save().complete(function (err) {
           if (err) {
             console.error("Could send event " + event.id, err);
@@ -56,7 +56,7 @@ var processNextAdd = function (callback) {
     var data = event.loadout;
     OrderBook.addOrder(data, function (err, order) {
       if (!err) {
-        event.status = "sent";
+        event.status = "processed";
         event.save().complete(function (err) {
           if (err) {
             console.error("Could send event " + event.id, err);
