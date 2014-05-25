@@ -14,19 +14,20 @@ var OrderBook = require("./lib/order_book")
 
 var processEvents = function () {
   GLOBAL.queue.Event.findNextValid(function (err, event) {
-    if (err) {
-      return console.error("Could not fetch the next event. Exitting...", err);
-    }
+    if (err) return console.error("Could not fetch the next event. Exitting...", err);
     if (!event) {
-      OrderBook.matchBuyOrders(function () {
+      OrderBook.matchBuyOrders(function (err) {
+        if (err) return console.error("Error processing matches. Exitting...", err);
         setTimeout(processEvents, QUEUE_DELAY);
       });
     } else if (event.type === "cancel_order") {
-      processCancellation(event, function () {
+      processCancellation(event, function (err) {
+        if (err) return console.error("Error processing cancellation. Exitting...", err);
         setTimeout(processEvents, QUEUE_DELAY);
       });
     } else if (event.type === "add_order") {
-      processAdd(event, function () {
+      processAdd(event, function (err) {
+        if (err) return console.error("Error processing add order. Exitting...", err);
         setTimeout(processEvents, QUEUE_DELAY);
       });
     }
