@@ -14,20 +14,20 @@ var OrderBook = require("./lib/order_book")
 
 var processEvents = function () {
   GLOBAL.queue.Event.findNextValid(function (err, event) {
-    if (err) return console.error("Could not fetch the next event. Exitting...", err);
+    if (err) return exit("Could not fetch the next event. Exitting...", err);
     if (!event) {
-      OrderBook.matchBuyOrders(function (err) {
-        if (err) return console.error("Error processing matches. Exitting...", err);
+      return OrderBook.matchBuyOrders(function (err) {
+        if (err) return exit("Error processing matches. Exitting...", err);
         setTimeout(processEvents, QUEUE_DELAY);
       });
     } else if (event.type === "cancel_order") {
-      processCancellation(event, function (err) {
-        if (err) return console.error("Error processing cancellation. Exitting...", err);
+      return processCancellation(event, function (err) {
+        if (err) return exit("Error processing cancellation. Exitting...", err);
         setTimeout(processEvents, QUEUE_DELAY);
       });
     } else if (event.type === "add_order") {
-      processAdd(event, function (err) {
-        if (err) return console.error("Error processing add order. Exitting...", err);
+      return processAdd(event, function (err) {
+        if (err) return exit("Error processing add order. Exitting...", err);
         setTimeout(processEvents, QUEUE_DELAY);
       });
     }
@@ -42,19 +42,19 @@ var processCancellation = function (event, callback) {
       event.save().complete(function (err) {
         if (err) {
           console.error("Could send event " + event.id, err);
-          return callback();
+          return callback(err);
         } else {
           GLOBAL.queue.Event.addOrderCanceled({order_id: orderId}, function (err) {
             if (err) {
               console.error("Could not add order_cancel for event " + event.id + " order " + orderId, err);
             }
-            return callback();
+            return callback(err);
           });
         }
       });
     } else {
       console.error("Could not process event " + event.id, err);
-      return callback();
+      return callback(err);
     }
   });
 };
@@ -67,21 +67,26 @@ var processAdd = function (event, callback) {
       event.save().complete(function (err) {
         if (err) {
           console.error("Could send event " + event.id, err);
-          return callback();
+          return callback(err);
         } else {
           GLOBAL.queue.Event.addOrderAdded({order_id: order.external_order_id}, function (err) {
             if (err) {
               console.error("Could not add order_added for event " + event.id + " order " + order.id, err);
             }
-            return callback();
+            return callback(err);
           });
         }
       });
     } else {
       console.error("Could not process event " + event.id, err);
-      return callback();
+      return callback(err);
     }
   });
+};
+
+var exit = function (errMessage, err) {
+  console.error(errMessage, err);
+  process.exit();
 };
 
 processEvents();
