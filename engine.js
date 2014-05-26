@@ -36,7 +36,7 @@ var processEvents = function () {
 
 var processCancellation = function (event, callback) {
   var orderId = event.loadout.order_id;
-  OrderBook.deleteOpenOrder(orderId, function (err) {
+  OrderBook.deleteOpenOrder(orderId, function (err, existentOrder) {
     if (!err) {
       event.status = "processed";
       event.save().complete(function (err) {
@@ -44,6 +44,7 @@ var processCancellation = function (event, callback) {
           console.error("Could send event " + event.id, err);
           return callback(err);
         } else {
+          if (!existentOrder) return callback();
           GLOBAL.queue.Event.addOrderCanceled({order_id: orderId}, function (err) {
             if (err) {
               console.error("Could not add order_cancel for event " + event.id + " order " + orderId, err);

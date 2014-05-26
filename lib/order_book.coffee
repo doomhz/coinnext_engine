@@ -135,13 +135,15 @@ OrderBook =
 
   deleteOpenOrder: (externalId, callback = ()->)->
     query =
-      external_order_id: externalId
-      status:
-        ne: MarketHelper.getOrderStatus "completed"
-    BuyOrder.destroy(query).complete (err)->
-      return callback err  if err
-      SellOrder.destroy(query).complete (err)->
-        return callback err  if err
-        callback()
+      where:
+        external_order_id: externalId
+        status:
+          ne: MarketHelper.getOrderStatus "completed"
+    BuyOrder.find(query).complete (err, buyOrder)->
+      SellOrder.find(query).complete (err, sellOrder)->
+        orderToDelete = buyOrder or sellOrder
+        return callback err, orderToDelete  if err or not orderToDelete
+        orderToDelete.destroy().complete (err)->
+          return callback err, orderToDelete
 
 exports = module.exports = OrderBook
