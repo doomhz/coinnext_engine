@@ -1,7 +1,5 @@
 _ = require "underscore"
-math = require("mathjs")
-  number: "bignumber"
-  decimals: 8
+math = require "./math"
 
 FEE = 0
 
@@ -52,11 +50,17 @@ MarketHelper =
   isValidCurrency: (currency)->
     !!CURRENCIES[currency]
 
+  toBignum: (value)->
+    math.bignumber value.toString()
+
   convertToBigint: (value)->
-    math.multiply value, 100000000
+    parseInt math.multiply(@toBignum(value), @toBignum(100000000))
 
   convertFromBigint: (value)->
-    math.divide value, 100000000
+    parseFloat math.divide(@toBignum(value), @toBignum(100000000))
+
+  multiplyBigints: (value, value2)->
+    parseInt math.divide(math.multiply(@toBignum(value), @toBignum(value2)), @toBignum(100000000))
 
   getEventType: (type)->
     EVENT_TYPE[type]

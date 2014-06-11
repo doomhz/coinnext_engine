@@ -3,10 +3,7 @@
 
   MarketHelper = require("../lib/market_helper");
 
-  math = require("mathjs")({
-    number: "bignumber",
-    decimals: 8
-  });
+  math = require("../lib/math");
 
   module.exports = function(sequelize, DataTypes) {
     var BuyOrder;
@@ -89,7 +86,7 @@
       paranoid: true,
       getterMethods: {
         left_amount: function() {
-          return math.add(this.amount, -this.matched_amount);
+          return parseInt(math.subtract(MarketHelper.toBignum(this.amount), MarketHelper.toBignum(this.matched_amount)));
         },
         action: function() {
           return "buy";

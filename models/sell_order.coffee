@@ -1,7 +1,5 @@
 MarketHelper = require "../lib/market_helper"
-math = require("mathjs")
-  number: "bignumber"
-  decimals: 8
+math = require "../lib/math"
 
 module.exports = (sequelize, DataTypes) ->
 
@@ -66,7 +64,7 @@ module.exports = (sequelize, DataTypes) ->
       getterMethods:
 
         left_amount: ()->
-          math.add @amount, -@matched_amount
+          parseInt math.subtract(MarketHelper.toBignum(@amount), MarketHelper.toBignum(@matched_amount))
 
         action: ()->
           "sell"

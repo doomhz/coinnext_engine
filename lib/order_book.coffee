@@ -2,9 +2,7 @@ BuyOrder = GLOBAL.db.BuyOrder
 SellOrder = GLOBAL.db.SellOrder
 MarketHelper = require "./market_helper"
 async = require "async"
-math = require("mathjs")
-  number: "bignumber"
-  decimals: 8
+math = require "./math"
 
 OrderBook =
 
@@ -88,7 +86,7 @@ OrderBook =
   matchOrderAmount: (order, amount, unitPrice, activeOrderId)->
     resultAmount = @calculateResultAmount order, amount, unitPrice
     fee = @calculateFee resultAmount
-    resultAmount = math.add resultAmount, -fee
+    resultAmount = parseInt math.subtract(MarketHelper.toBignum(resultAmount), MarketHelper.toBignum(fee))
     @addMatchedAmount order, amount
     @addResultAmount order, resultAmount
     @addFee order, fee
@@ -107,20 +105,19 @@ OrderBook =
 
   calculateResultAmount: (order, amount, unitPrice)->
     return amount  if order.action is "buy"
-    unitPrice = MarketHelper.convertFromBigint unitPrice
-    math.round math.multiply(amount, unitPrice)
+    MarketHelper.multiplyBigints amount, unitPrice
 
   calculateFee: (amount)->
-    math.round math.select(amount).divide(100).multiply(MarketHelper.getTradeFee()).done(), 0
+    parseInt math.select(MarketHelper.toBignum(amount)).divide(100).multiply(MarketHelper.toBignum(MarketHelper.getTradeFee())).done()
 
   addMatchedAmount: (order, amount)->
-    order.matched_amount = math.add order.matched_amount, amount
+    order.matched_amount = parseInt math.add(MarketHelper.toBignum(order.matched_amount), MarketHelper.toBignum(amount))
 
   addResultAmount: (order, amount)->
-    order.result_amount = math.add order.result_amount, amount
+    order.result_amount = parseInt math.add(MarketHelper.toBignum(order.result_amount), MarketHelper.toBignum(amount))
 
   addFee: (order, amount)->
-    order.fee = math.add order.fee, amount
+    order.fee = parseInt math.add(MarketHelper.toBignum(order.fee), MarketHelper.toBignum(amount))
 
   adjustStatusByAmounts: (order)->
     return order.status = "completed"  if order.left_amount is 0
