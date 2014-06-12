@@ -108,7 +108,7 @@ OrderBook =
     MarketHelper.multiplyBigints amount, unitPrice
 
   calculateFee: (amount)->
-    parseInt math.ceil(math.select(MarketHelper.toBignum(amount)).divide(MarketHelper.toBignum(100)).multiply(MarketHelper.toBignum(MarketHelper.getTradeFee()))).done()
+    parseInt math.select(MarketHelper.toBignum(amount)).divide(MarketHelper.toBignum(100)).multiply(MarketHelper.toBignum(MarketHelper.getTradeFee())).ceil().done()
 
   addMatchedAmount: (order, amount)->
     order.matched_amount = parseInt math.add(MarketHelper.toBignum(order.matched_amount), MarketHelper.toBignum(amount))
