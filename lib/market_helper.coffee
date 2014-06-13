@@ -51,7 +51,7 @@ MarketHelper =
     !!CURRENCIES[currency]
 
   toBignum: (value)->
-    math.bignumber value.toString()
+    math.bignumber "#{value}"
 
   convertToBigint: (value)->
     parseInt math.multiply(@toBignum(value), @toBignum(100000000))
